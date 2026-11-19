@@ -1,138 +1,139 @@
-<!doctype html>
-<html lang="es">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Fichas de perros</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <script src="{{ url_for('static', filename='gallery.js') }}" defer></script>
-</head>
-<body>
-    <main class="card">
-        <p class="eyebrow">Protectora · Herramienta local</p>
-        <h1>Fichas de perros</h1>
-        <p class="intro">
-            Importa las fotografías de una exportación ZIP de WhatsApp.
-            Las imágenes nuevas se guardan localmente, los duplicados se
-            detectan automáticamente y puedes elegir las fotografías que
-            formarán parte de las fichas.
-        </p>
+{% extends "base.html" %}
 
-        <section class="import-section" aria-labelledby="import-title">
-            <h2 id="import-title">Importar exportación de WhatsApp</h2>
-            <form class="import-form" method="post" action="{{ url_for('importar') }}" enctype="multipart/form-data">
-                <label class="file-field" for="archivo_zip">
-                    <span>Archivo ZIP</span>
-                    <input id="archivo_zip" name="archivo_zip" type="file" accept=".zip,application/zip" required>
+{% block title %}Fichas de perros{% endblock %}
+
+{% block content %}
+<p class="eyebrow">Protectora · Herramienta local</p>
+<h1>Fichas de perros</h1>
+<p class="intro">
+    Importa las fotografías de una exportación ZIP de WhatsApp.
+    Las imágenes nuevas se guardan localmente, los duplicados se
+    detectan automáticamente y puedes elegir las fotografías que
+    formarán parte de las fichas.
+</p>
+
+<div class="quick-actions">
+    <a class="button-link" href="{{ url_for('lista_fichas') }}">Ver fichas</a>
+    <a class="button-link button-link-secondary" href="{{ url_for('nueva_ficha') }}">Nueva ficha</a>
+</div>
+
+<section id="importar" class="import-section" aria-labelledby="import-title">
+    <h2 id="import-title">Importar exportación de WhatsApp</h2>
+    <form class="import-form" method="post" action="{{ url_for('importar') }}" enctype="multipart/form-data">
+        <label class="file-field" for="archivo_zip">
+            <span>Archivo ZIP</span>
+            <input id="archivo_zip" name="archivo_zip" type="file" accept=".zip,application/zip" required>
+        </label>
+        <button type="submit">Importar fotografías</button>
+    </form>
+    <p class="formats">Formatos admitidos: JPG, JPEG, PNG y WEBP.</p>
+</section>
+
+{% if error %}
+<div class="alert alert-error" role="alert">
+    {{ error }}
+</div>
+{% endif %}
+
+{% if resultado %}
+<section class="resultado" aria-labelledby="resultado-title" aria-live="polite">
+    <h2 id="resultado-title">Resultado de la importación</h2>
+    <dl class="metrics">
+        <div>
+            <dt>Encontradas</dt>
+            <dd>{{ resultado.encontradas }}</dd>
+        </div>
+        <div>
+            <dt>Nuevas</dt>
+            <dd>{{ resultado.nuevas }}</dd>
+        </div>
+        <div>
+            <dt>Duplicadas</dt>
+            <dd>{{ resultado.duplicadas }}</dd>
+        </div>
+        <div>
+            <dt>Descartadas</dt>
+            <dd>{{ resultado.descartadas }}</dd>
+        </div>
+        <div>
+            <dt>Errores</dt>
+            <dd>{{ resultado.errores }}</dd>
+        </div>
+    </dl>
+</section>
+{% endif %}
+
+<section id="galeria" class="galeria" aria-labelledby="galeria-title">
+    <div class="galeria-header">
+        <h2 id="galeria-title">Fotografías de la biblioteca</h2>
+        <span class="badge">
+            {{ fotos|length }} {% if fotos|length == 1 %}fotografía{% else %}fotografías{% endif %}
+        </span>
+    </div>
+
+    {% if fotos %}
+    <div class="selection-toolbar">
+        <p class="selection-count" aria-live="polite">
+            <strong id="contador-seleccionadas">0</strong>
+            <span id="texto-contador">seleccionadas</span>
+            <span class="selection-total">de {{ fotos|length }}</span>
+        </p>
+        <div class="selection-actions">
+            <button class="button-secondary" type="button" id="seleccionar-todas">Seleccionar todas</button>
+            <button class="button-secondary" type="button" id="deseleccionar-todas">Deseleccionar todas</button>
+            <button type="button" id="continuar-seleccion">Continuar con las seleccionadas</button>
+        </div>
+    </div>
+
+    <div class="galeria-grid">
+        {% for foto in fotos %}
+        <article class="foto-card">
+            <label class="foto-thumb" for="foto-{{ foto.id }}">
+                <img src="{{ url_for('miniatura', foto_id=foto.id) }}"
+                     alt="Fotografía de perro: {{ foto.nombre_archivo }}"
+                     loading="lazy" decoding="async">
+            </label>
+            <div class="foto-meta">
+                <input class="foto-check" id="foto-{{ foto.id }}" type="checkbox"
+                       value="{{ foto.id }}" data-nombre="{{ foto.nombre_archivo }}">
+                <label class="foto-name" for="foto-{{ foto.id }}" title="{{ foto.nombre_archivo }}">
+                    {{ foto.nombre_archivo }}
                 </label>
-                <button type="submit">Importar fotografías</button>
-            </form>
-            <p class="formats">Formatos admitidos: JPG, JPEG, PNG y WEBP.</p>
-        </section>
-
-        {% if error %}
-        <div class="alert alert-error" role="alert">
-            {{ error }}
-        </div>
-        {% endif %}
-
-        {% if resultado %}
-        <section class="resultado" aria-labelledby="resultado-title" aria-live="polite">
-            <h2 id="resultado-title">Resultado de la importación</h2>
-            <dl class="metrics">
-                <div>
-                    <dt>Encontradas</dt>
-                    <dd>{{ resultado.encontradas }}</dd>
-                </div>
-                <div>
-                    <dt>Nuevas</dt>
-                    <dd>{{ resultado.nuevas }}</dd>
-                </div>
-                <div>
-                    <dt>Duplicadas</dt>
-                    <dd>{{ resultado.duplicadas }}</dd>
-                </div>
-                <div>
-                    <dt>Descartadas</dt>
-                    <dd>{{ resultado.descartadas }}</dd>
-                </div>
-                <div>
-                    <dt>Errores</dt>
-                    <dd>{{ resultado.errores }}</dd>
-                </div>
-            </dl>
-        </section>
-        {% endif %}
-
-        <section class="galeria" aria-labelledby="galeria-title">
-            <div class="galeria-header">
-                <h2 id="galeria-title">Fotografías importadas</h2>
-                <span class="badge">
-                    {{ fotos|length }} {% if fotos|length == 1 %}fotografía{% else %}fotografías{% endif %}
-                </span>
             </div>
+        </article>
+        {% endfor %}
+    </div>
 
-            {% if fotos %}
-            <div class="selection-toolbar">
-                <p class="selection-count" aria-live="polite">
-                    <strong id="contador-seleccionadas">0</strong>
-                    <span id="texto-contador">seleccionadas</span>
-                    <span class="selection-total">de {{ fotos|length }}</span>
-                </p>
-                <div class="selection-actions">
-                    <button class="button-secondary" type="button" id="seleccionar-todas">Seleccionar todas</button>
-                    <button class="button-secondary" type="button" id="deseleccionar-todas">Deseleccionar todas</button>
-                    <button type="button" id="continuar-seleccion">Continuar con las seleccionadas</button>
-                </div>
-            </div>
+    <div id="aviso-seleccion" class="alert alert-error" role="alert" hidden></div>
 
-            <div class="galeria-grid">
-                {% for foto in fotos %}
-                <article class="foto-card">
-                    <label class="foto-thumb" for="foto-{{ foto.id }}">
-                        <img src="{{ url_for('miniatura', foto_id=foto.id) }}"
-                             alt="Fotografía de perro: {{ foto.nombre_archivo }}"
-                             loading="lazy" decoding="async">
-                    </label>
-                    <div class="foto-meta">
-                        <input class="foto-check" id="foto-{{ foto.id }}" type="checkbox"
-                               value="{{ foto.id }}" data-nombre="{{ foto.nombre_archivo }}">
-                        <label class="foto-name" for="foto-{{ foto.id }}" title="{{ foto.nombre_archivo }}">
-                            {{ foto.nombre_archivo }}
-                        </label>
-                    </div>
-                </article>
-                {% endfor %}
-            </div>
-
-            <div id="aviso-seleccion" class="alert alert-error" role="alert" hidden></div>
-
-            <section id="resumen-seleccion" class="resumen-seleccion" aria-live="polite" hidden>
-                <h3>Fotografías preparadas</h3>
-                <p>
-                    <strong id="resumen-cantidad">0</strong>
-                    <span id="resumen-texto">fotografías seleccionadas</span>.
-                </p>
-                <ul id="resumen-nombres" class="resumen-nombres"></ul>
-                <button type="button" id="generar-pdf">Generar PDF</button>
-                <div id="estado-pdf" class="pdf-status" role="status" aria-live="polite"></div>
-            </section>
-            {% else %}
-            <p class="empty-state">
-                Todavía no hay fotografías importadas. Añade un ZIP para empezar.
-            </p>
-            {% endif %}
-        </section>
-
-        <div class="status">
-            <span class="dot" aria-hidden="true"></span>
-            <span>Servidor local funcionando</span>
-        </div>
-
-        <p class="note">
-            Cada PDF generado se guarda como un documento independiente listo
-            para imprimir en A4.
+    <section id="resumen-seleccion" class="resumen-seleccion" aria-live="polite" hidden>
+        <h3>Fotografías preparadas</h3>
+        <p>
+            <strong id="resumen-cantidad">0</strong>
+            <span id="resumen-texto">fotografías seleccionadas</span>.
         </p>
-    </main>
-</body>
-</html>
+        <ul id="resumen-nombres" class="resumen-nombres"></ul>
+        <button type="button" id="generar-pdf">Generar PDF</button>
+        <div id="estado-pdf" class="pdf-status" role="status" aria-live="polite"></div>
+    </section>
+    {% else %}
+    <p class="empty-state">
+        Todavía no hay fotografías. Importa un ZIP o crea una ficha con fotografías.
+    </p>
+    {% endif %}
+</section>
+
+<div class="status">
+    <span class="dot" aria-hidden="true"></span>
+    <span>Servidor local funcionando</span>
+</div>
+
+<p class="note">
+    Cada PDF generado se guarda como un documento independiente listo
+    para imprimir en A4.
+</p>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='gallery.js') }}" defer></script>
+{% endblock %}

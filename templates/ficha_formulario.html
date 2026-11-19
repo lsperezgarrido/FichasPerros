@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}{% if modo == "crear" %}Nueva ficha{% else %}Editar ficha #{{ ficha.id }}{% endif %} · FichasPerros{% endblock %}
+
+{% block content %}
+<p class="eyebrow">Gestión</p>
+<h1 class="page-title">
+    {% if modo == "crear" %}Nueva ficha{% else %}Editar ficha #{{ ficha.id }}{% endif %}
+</h1>
+<p class="intro">
+    Completa los datos que conozcas. Puedes guardar la ficha sin fotografías
+    y añadirlas más adelante.
+</p>
+
+{% if error %}
+<div class="alert alert-error" role="alert">
+    {{ error }}
+    <p class="form-hint">Si habías seleccionado fotografías nuevas, vuelve a seleccionarlas antes de guardar.</p>
+</div>
+{% endif %}
+
+<form class="ficha-form" method="post" action="{{ accion }}" enctype="multipart/form-data">
+    <div class="form-grid">
+        <label class="field" for="lugar_recogida">
+            <span>Lugar de recogida</span>
+            <input id="lugar_recogida" name="lugar_recogida" type="text"
+                   value="{{ datos.lugar_recogida }}" maxlength="120" autocomplete="off">
+        </label>
+        <label class="field" for="fecha_recogida">
+            <span>Fecha de recogida</span>
+            <input id="fecha_recogida" name="fecha_recogida" type="date"
+                   value="{{ datos.fecha_recogida }}">
+        </label>
+        <label class="field" for="numero_microchip">
+            <span>Nº microchip</span>
+            <input id="numero_microchip" name="numero_microchip" type="text"
+                   value="{{ datos.numero_microchip }}" maxlength="50" autocomplete="off">
+        </label>
+    </div>
+
+    <label class="field field-full" for="observaciones">
+        <span>Observaciones</span>
+        <textarea id="observaciones" name="observaciones" rows="5"
+                  maxlength="5000">{{ datos.observaciones }}</textarea>
+    </label>
+
+    {% if modo == "editar" and fotos_ficha %}
+    <section class="form-section" aria-labelledby="fotos-actuales-title">
+        <h2 id="fotos-actuales-title">Fotografías actuales</h2>
+        <p class="formats">
+            Marca «Quitar de esta ficha» para desasociar una fotografía.
+            La imagen seguirá disponible en la biblioteca general.
+        </p>
+        <div class="galeria-grid">
+            {% for foto in fotos_ficha %}
+            <article class="foto-card{% if foto.id in quitar_ids %} is-removed{% endif %}">
+                <div class="foto-thumb">
+                    <img src="{{ url_for('miniatura', foto_id=foto.id) }}"
+                         alt="Fotografía de perro: {{ foto.nombre_archivo }}"
+                         loading="lazy" decoding="async">
+                </div>
+                <div class="foto-meta foto-meta-quitar">
+                    <span class="foto-name">{{ foto.nombre_archivo }}</span>
+                    <label class="check-line">
+                        <input class="quitar-foto-check" type="checkbox"
+                               name="quitar_fotos" value="{{ foto.id }}"
+                               {% if foto.id in quitar_ids %}checked{% endif %}>
+                        Quitar de esta ficha
+                    </label>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="form-section" aria-labelledby="nuevas-fotos-title">
+        <h2 id="nuevas-fotos-title">
+            {% if modo == "editar" %}Añadir fotografías{% else %}Fotografías{% endif %}
+        </h2>
+        <label class="file-field" for="fotografias">
+            <span>Seleccionar fotografías</span>
+            <input id="fotografias" name="fotografias" type="file"
+                   accept=".jpg,.jpeg,.png,.webp" multiple>
+        </label>
+        <p class="formats">
+            JPG, JPEG, PNG y WEBP. Puedes seleccionar varias fotografías.
+            Las imágenes duplicadas se reutilizan automáticamente.
+        </p>
+        <div id="previsualizacion-fotos" class="preview-grid" aria-live="polite"></div>
+    </section>
+
+    <div class="form-actions">
+        <button type="submit">Guardar ficha</button>
+        <a class="button-link button-link-secondary"
+           href="{% if modo == 'editar' %}{{ url_for('detalle_ficha', ficha_id=ficha.id) }}{% else %}{{ url_for('lista_fichas') }}{% endif %}">
+            Cancelar
+        </a>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='ficha_form.js') }}" defer></script>
+{% endblock %}

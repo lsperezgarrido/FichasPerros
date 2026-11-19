@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Ficha #{{ ficha.id }} · FichasPerros{% endblock %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <p class="eyebrow">Ficha</p>
+        <h1 class="page-title">Ficha #{{ ficha.id }}</h1>
+    </div>
+    <div class="page-actions">
+        <a class="button-link" href="{{ url_for('editar_ficha', ficha_id=ficha.id) }}">Editar</a>
+        <a class="button-link button-link-danger" href="{{ url_for('confirmar_eliminar_ficha', ficha_id=ficha.id) }}">Eliminar</a>
+    </div>
+</div>
+
+{% if mensaje %}
+<div class="alert alert-ok" role="status">{{ mensaje }}</div>
+{% endif %}
+
+<dl class="ficha-datos">
+    <div>
+        <dt>Lugar de recogida</dt>
+        <dd>{{ ficha.lugar_recogida or "—" }}</dd>
+    </div>
+    <div>
+        <dt>Fecha de recogida</dt>
+        <dd>{% if ficha.fecha_recogida %}{{ ficha.fecha_recogida|fecha }}{% else %}—{% endif %}</dd>
+    </div>
+    <div>
+        <dt>Nº microchip</dt>
+        <dd>{{ ficha.numero_microchip or "—" }}</dd>
+    </div>
+    <div class="ficha-dato-ancho">
+        <dt>Observaciones</dt>
+        <dd class="texto-largo">{{ ficha.observaciones or "—" }}</dd>
+    </div>
+</dl>
+
+<p class="detail-meta">
+    Creada: {{ ficha.fecha_creacion|fecha_hora }}
+    · Última modificación: {{ ficha.fecha_modificacion|fecha_hora }}
+</p>
+
+<section class="ficha-fotos" aria-labelledby="fotos-title">
+    <div class="galeria-header">
+        <h2 id="fotos-title">Fotografías</h2>
+        <span class="badge">
+            {{ fotos_ficha|length }} {% if fotos_ficha|length == 1 %}fotografía{% else %}fotografías{% endif %}
+        </span>
+    </div>
+
+    {% if fotos_ficha %}
+    <div class="galeria-grid">
+        {% for foto in fotos_ficha %}
+        <article class="foto-card">
+            <div class="foto-thumb">
+                <img src="{{ url_for('miniatura', foto_id=foto.id) }}"
+                     alt="Fotografía de perro: {{ foto.nombre_archivo }}"
+                     loading="lazy" decoding="async">
+            </div>
+            <div class="foto-meta">
+                <span class="foto-name">{{ foto.nombre_archivo }}</span>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="empty-state">Esta ficha todavía no tiene fotografías.</p>
+    {% endif %}
+</section>
+
+<div class="page-footer">
+    <a class="button-link button-link-secondary" href="{{ url_for('lista_fichas') }}">Volver a fichas</a>
+</div>
+{% endblock %}

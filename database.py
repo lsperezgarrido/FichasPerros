@@ -1,9 +1,17 @@
 """Acceso a la base de datos SQLite local."""
 
 import sqlite3
+import sys
+from datetime import datetime
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent
+# En un ejecutable de PyInstaller, los datos persistentes deben quedar junto
+# al .exe y no dentro de la carpeta temporal de la aplicación.
+BASE_DIR = (
+    Path(sys.executable).resolve().parent
+    if getattr(sys, "frozen", False)
+    else Path(__file__).resolve().parent
+)
 DATA_DIR = BASE_DIR / "data"
 DB_PATH = DATA_DIR / "fichas.db"
 
@@ -15,6 +23,28 @@ CREATE TABLE IF NOT EXISTS fotos (
     hash_sha256 TEXT NOT NULL UNIQUE,
     fecha_importacion TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
+
+CREATE TABLE IF NOT EXISTS fichas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    lugar_recogida TEXT NOT NULL DEFAULT '',
+    fecha_recogida TEXT NOT NULL DEFAULT '',
+    numero_microchip TEXT NOT NULL DEFAULT '',
+    observaciones TEXT NOT NULL DEFAULT '',
+    fecha_creacion TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    fecha_modificacion TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+
+CREATE TABLE IF NOT EXISTS ficha_fotos (
+    ficha_id INTEGER NOT NULL,
+    foto_id INTEGER NOT NULL,
+    orden INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (ficha_id, foto_id),
+    FOREIGN KEY (ficha_id) REFERENCES fichas(id) ON DELETE CASCADE,
+    FOREIGN KEY (foto_id) REFERENCES fotos(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_ficha_fotos_foto
+    ON ficha_fotos(foto_id);
 """
 
 
@@ -23,14 +53,15 @@ def get_connection():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(DB_PATH)
     connection.row_factory = sqlite3.Row
+    connection.execute("PRAGMA foreign_keys = ON")
     return connection
 
 
 def init_db():
-    """Crea la base de datos y la tabla de fotografías si no existen."""
+    """Crea la base de datos y las tablas si no existen."""
     connection = get_connection()
     try:
-        connection.execute(SCHEMA)
+        connection.executescript(SCHEMA)
         connection.commit()
     finally:
         connection.close()
@@ -56,5 +87,89 @@ def obtener_foto(foto_id: int):
             "SELECT id, nombre_archivo, ruta FROM fotos WHERE id = ?",
             (foto_id,),
         ).fetchone()
+    finally:
+        connection.close()
+
+
+def listar_fichas(busqueda: str = ""):
+    """Devuelve las fichas, opcionalmente filtradas por texto."""
+    consulta = """
+SELECT
+    fi.id,
+    fi.lugar_recogida,
+    fi.fecha_recogida,
+    fi.numero_microchip,
+    fi.observaciones,
+    fi.fecha_creacion,
+    fi.fecha_modificacion,
+    (
+        SELECT COUNT(*)
+        FROM ficha_fotos ff
+        WHERE ff.ficha_id = fi.id
+    ) AS num_fotos,
+    (
+        SELECT ff.foto_id
+        FROM ficha_fotos ff
+        WHERE ff.ficha_id = fi.id
+        ORDER BY ff.orden, ff.rowid
+        LIMIT 1
+    ) AS foto_portada_id
+FROM fichas fi
+"""
+    parametros = []
+    busqueda = busqueda.strip()
+    if busqueda:
+        patron = f"%{busqueda}%"
+        condiciones = [
+            "fi.lugar_recogida LIKE ?",
+            "fi.fecha_recogida LIKE ?",
+            "fi.numero_microchip LIKE ?",
+            "fi.observaciones LIKE ?",
+            "CAST(fi.id AS TEXT) LIKE ?",
+        ]
+        parametros = [patron] * 5
+        try:
+            fecha_iso = datetime.strptime(busqueda, "%d/%m/%Y").strftime("%Y-%m-%d")
+        except ValueError:
+            fecha_iso = None
+        if fecha_iso:
+            condiciones.append("fi.fecha_recogida = ?")
+            parametros.append(fecha_iso)
+        consulta += " WHERE " + " OR ".join(condiciones)
+    consulta += " ORDER BY fi.id DESC"
+
+    connection = get_connection()
+    try:
+        return connection.execute(consulta, parametros).fetchall()
+    finally:
+        connection.close()
+
+
+def obtener_ficha(ficha_id: int):
+    """Devuelve una ficha por su identificador o ``None``."""
+    connection = get_connection()
+    try:
+        return connection.execute(
+            "SELECT id, lugar_recogida, fecha_recogida, numero_microchip, "
+            "observaciones, fecha_creacion, fecha_modificacion "
+            "FROM fichas WHERE id = ?",
+            (ficha_id,),
+        ).fetchone()
+    finally:
+        connection.close()
+
+
+def listar_fotos_ficha(ficha_id: int):
+    """Devuelve las fotografías asociadas a una ficha, en orden."""
+    connection = get_connection()
+    try:
+        return connection.execute(
+            "SELECT f.id, f.nombre_archivo, f.ruta "
+            "FROM ficha_fotos ff "
+            "JOIN fotos f ON f.id = ff.foto_id "
+            "WHERE ff.ficha_id = ? "
+            "ORDER BY ff.orden, ff.rowid",
+            (ficha_id,),
+        ).fetchall()
     finally:
         connection.close()

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Fichas · FichasPerros{% endblock %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <p class="eyebrow">Gestión</p>
+        <h1 class="page-title">Fichas</h1>
+        <p class="intro">
+            Consulta, crea, edita o elimina las fichas de la protectora.
+        </p>
+    </div>
+    <a class="button-link" href="{{ url_for('nueva_ficha') }}">Nueva ficha</a>
+</div>
+
+{% if mensaje %}
+<div class="alert alert-ok" role="status">{{ mensaje }}</div>
+{% endif %}
+
+<form class="search-form" method="get" action="{{ url_for('lista_fichas') }}">
+    <label class="sr-only" for="busqueda">Buscar fichas</label>
+    <input id="busqueda" type="search" name="q" value="{{ busqueda }}"
+           placeholder="Buscar por lugar, fecha, microchip, observaciones o número de ficha">
+    <button type="submit">Buscar</button>
+    {% if busqueda %}
+    <a class="button-link button-link-secondary" href="{{ url_for('lista_fichas') }}">Limpiar</a>
+    {% endif %}
+</form>
+
+<div class="list-summary">
+    <span class="badge">
+        {{ fichas|length }} {% if fichas|length == 1 %}ficha{% else %}fichas{% endif %}
+    </span>
+    {% if busqueda %}
+    <span class="muted">Resultados para «{{ busqueda }}»</span>
+    {% endif %}
+</div>
+
+{% if fichas %}
+<div class="fichas-lista">
+    {% for ficha in fichas %}
+    <a class="ficha-resumen" href="{{ url_for('detalle_ficha', ficha_id=ficha.id) }}">
+        <div class="ficha-resumen-texto">
+            <span class="ficha-id">Ficha #{{ ficha.id }}</span>
+            <strong class="ficha-titulo">
+                {{ ficha.lugar_recogida or "Sin lugar indicado" }}
+            </strong>
+            <span class="ficha-datos">
+                {% if ficha.fecha_recogida %}{{ ficha.fecha_recogida|fecha }}{% else %}Sin fecha{% endif %}
+                · {{ ficha.numero_microchip or "Sin microchip" }}
+            </span>
+            <span class="ficha-meta">
+                {{ ficha.num_fotos }} {% if ficha.num_fotos == 1 %}fotografía{% else %}fotografías{% endif %}
+            </span>
+        </div>
+        {% if ficha.foto_portada_id %}
+        <img class="ficha-resumen-foto"
+             src="{{ url_for('miniatura', foto_id=ficha.foto_portada_id) }}"
+             alt="Fotografía de la ficha {{ ficha.id }}" loading="lazy">
+        {% else %}
+        <span class="ficha-resumen-sin-foto">Sin foto</span>
+        {% endif %}
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<p class="empty-state">
+    {% if busqueda %}
+    No hay fichas que coincidan con la búsqueda.
+    {% else %}
+    Todavía no hay fichas. Pulsa «Nueva ficha» para crear la primera.
+    {% endif %}
+</p>
+{% endif %}
+{% endblock %}

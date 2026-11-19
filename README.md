@@ -3,8 +3,9 @@
 Aplicación local para Windows destinada a importar fotografías de perros desde
 exportaciones ZIP de WhatsApp y generar fichas imprimibles en PDF.
 
-La aplicación permite importar fotografías, evita duplicados mediante su hash
-SHA-256, seleccionar las imágenes y generar un PDF de fichas imprimibles en A4.
+La aplicación permite gestionar fichas de perros, importar fotografías desde
+WhatsApp, evitar duplicados mediante SHA-256, seleccionar imágenes y generar un
+PDF de fichas imprimibles en A4.
 
 ## Requisitos
 
@@ -43,6 +44,19 @@ pulsar `Ctrl+C` en la terminal.
 
 ## Uso
 
+### Fichas
+
+1. Abrir «Fichas» en la navegación superior.
+2. Pulsar «Nueva ficha».
+3. Rellenar los campos y seleccionar fotografías si se desean.
+4. Guardar y consultar la ficha desde su pantalla de detalle.
+5. Para modificarla, pulsar «Editar»; para eliminarla, «Eliminar» y confirmar.
+
+La lista permite buscar por lugar, fecha, microchip, observaciones o número de
+ficha.
+
+### WhatsApp y PDF
+
 1. Seleccionar un ZIP de exportación de WhatsApp.
 2. Pulsar «Importar fotografías».
 3. Consultar el resumen: encontradas, nuevas, duplicadas, descartadas y errores.
@@ -51,9 +65,21 @@ pulsar `Ctrl+C` en la terminal.
 6. Pulsar «Generar PDF» y descargar el documento generado.
 
 Las imágenes se guardan en `data/fotos` con nombres internos únicos. En SQLite
-se conserva el nombre original del archivo del ZIP y la ruta interna. Los
-archivos originales no se modifican y las imágenes repetidas se detectan por
-hash, aunque tengan nombres diferentes.
+se conserva el nombre original del archivo y la ruta interna. Los archivos
+originales no se modifican y las imágenes repetidas se detectan por hash,
+aunque tengan nombres diferentes.
+
+## Gestión de fichas
+
+Cada ficha guarda lugar de recogida, fecha de recogida, número de microchip,
+observaciones y sus fotografías. Se pueden crear fichas sin fotografías,
+añadirlas después, asociar imágenes ya existentes en la biblioteca o subir
+nuevas.
+
+Al quitar una fotografía de una ficha, la imagen permanece en la biblioteca
+general. Al eliminar una ficha se eliminan sus vínculos, pero no las
+fotografías ni los PDF ya generados. Esto evita romper otras fichas y conserva
+el historial de documentos.
 
 ## Galería y selección
 
@@ -95,8 +121,19 @@ desde la propia interfaz.
 ```
 
 Incluye comprobaciones de importación, duplicados, apertura de las imágenes
-guardadas, conservación de hashes y rechazo de ZIP maliciosos. La generación
-de PDF se ha validado con 1, 3, 4, 5, 6 y 10 fotografías.
+guardadas, conservación de hashes, rechazo de ZIP maliciosos y gestión de
+fichas. La generación de PDF se ha validado con 1, 3, 4, 5, 6 y 10 fotografías.
+
+## Datos y compatibilidad
+
+La base de datos existente se conserva. Se añadieron las tablas `fichas` y
+`ficha_fotos`; la tabla `fotos` y las fotografías ya importadas no se
+modificaron. No se añadieron dependencias.
+
+Las rutas de datos se calculan desde la ubicación del proyecto. Si la
+aplicación se ejecuta como un ejecutable de PyInstaller, `data/` y
+`documentos/` se sitúan junto al `.exe`, separados del código empaquetado. El
+empaquetado definitivo se realizará en una fase posterior.
 
 ## Estructura
 
@@ -104,23 +141,31 @@ de PDF se ha validado con 1, 3, 4, 5, 6 y 10 fotografías.
 FichasPerros/
 ├── app.py                 # Aplicación Flask
 ├── database.py            # Conexión y esquema SQLite
+├── ficha_service.py       # Creación, edición y borrado de fichas
 ├── whatsapp_import.py     # Importación segura de ZIP
 ├── pdf_generator.py       # Generación de fichas A4 en PDF
 ├── requirements.txt
 ├── README.md
 ├── templates/
-│   └── index.html
+│   ├── base.html
+│   ├── index.html
+│   ├── fichas_lista.html
+│   ├── ficha_detalle.html
+│   ├── ficha_formulario.html
+│   └── ficha_eliminar.html
 ├── static/
 │   ├── style.css
-│   └── gallery.js
+│   ├── gallery.js
+│   └── ficha_form.js
 ├── data/
-│   ├── fotos/             # Fotografías importadas
+│   ├── fotos/             # Fotografías de la biblioteca
 │   └── fichas.db          # Base de datos (se crea al arrancar)
 ├── documentos/            # PDF generados
 └── pruebas/
     ├── exportacion_whatsapp_01.zip
     ├── exportacion_whatsapp_02.zip
     ├── test_importacion.py
+    ├── test_fichas.py
     └── CREDITOS.md
 ```
 

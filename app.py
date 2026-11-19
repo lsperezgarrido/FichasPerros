@@ -1,11 +1,13 @@
 """Aplicación Flask local de FichasPerros."""
 
 import io
+from datetime import datetime
 
 from flask import (
     Flask,
     abort,
     jsonify,
+    redirect,
     render_template,
     request,
     send_file,
@@ -15,12 +17,44 @@ from flask import (
 from PIL import Image, ImageOps, UnidentifiedImageError
 
 import database
+import ficha_service
 import pdf_generator
 import whatsapp_import
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = whatsapp_import.MAX_BYTES_ZIP
 database.init_db()
+
+DATOS_FICHA_VACIOS = {campo: "" for campo in ficha_service.CAMPOS_FICHA}
+MENSAJES_ESTADO = {
+    "creada": "Ficha creada correctamente.",
+    "actualizada": "Ficha actualizada correctamente.",
+    "eliminada": "Ficha eliminada. Sus fotografías siguen en la biblioteca.",
+}
+
+
+@app.template_filter("fecha")
+def formatear_fecha(valor):
+    """Muestra una fecha ISO en formato español."""
+    if not valor:
+        return "—"
+    try:
+        return datetime.strptime(str(valor), "%Y-%m-%d").strftime("%d/%m/%Y")
+    except (TypeError, ValueError):
+        return str(valor)
+
+
+@app.template_filter("fecha_hora")
+def formatear_fecha_hora(valor):
+    """Muestra una marca de tiempo de SQLite en formato español."""
+    if not valor:
+        return "—"
+    try:
+        return datetime.strptime(str(valor), "%Y-%m-%d %H:%M:%S").strftime(
+            "%d/%m/%Y %H:%M"
+        )
+    except (TypeError, ValueError):
+        return str(valor)
 
 
 def _pagina(resultado=None, error=None, codigo=200):
@@ -35,10 +69,204 @@ def _pagina(resultado=None, error=None, codigo=200):
     )
 
 
+def _datos_formulario_ficha() -> dict:
+    return {
+        campo: request.form.get(campo, "")
+        for campo in ficha_service.CAMPOS_FICHA
+    }
+
+
+def _fotos_a_quitar() -> set[int]:
+    ids = set()
+    for valor in request.form.getlist("quitar_fotos"):
+        try:
+            ids.add(int(valor))
+        except (TypeError, ValueError):
+            continue
+    return ids
+
+
+def _render_formulario_ficha(
+    modo,
+    ficha,
+    datos,
+    fotos_ficha,
+    quitar_ids,
+    error=None,
+    codigo=200,
+):
+    accion = (
+        url_for("crear_ficha")
+        if modo == "crear"
+        else url_for("actualizar_ficha", ficha_id=ficha["id"])
+    )
+    return (
+        render_template(
+            "ficha_formulario.html",
+            modo=modo,
+            ficha=ficha,
+            datos=datos,
+            fotos_ficha=fotos_ficha,
+            quitar_ids=quitar_ids,
+            accion=accion,
+            error=error,
+        ),
+        codigo,
+    )
+
+
 @app.get("/")
 def index():
     """Muestra la pantalla principal con la galería."""
     return _pagina()
+
+
+@app.get("/fichas")
+def lista_fichas():
+    """Lista y busca las fichas existentes."""
+    busqueda = request.args.get("q", "").strip()
+    mensaje = MENSAJES_ESTADO.get(request.args.get("estado", ""))
+    return render_template(
+        "fichas_lista.html",
+        fichas=database.listar_fichas(busqueda),
+        busqueda=busqueda,
+        mensaje=mensaje,
+    )
+
+
+@app.get("/fichas/nueva")
+def nueva_ficha():
+    """Muestra el formulario de creación de una ficha."""
+    return _render_formulario_ficha(
+        "crear",
+        None,
+        dict(DATOS_FICHA_VACIOS),
+        [],
+        set(),
+    )
+
+
+@app.post("/fichas/nueva")
+def crear_ficha():
+    """Crea una ficha con sus fotografías."""
+    datos = _datos_formulario_ficha()
+    try:
+        ficha_id = ficha_service.crear_ficha(
+            datos,
+            request.files.getlist("fotografias"),
+        )
+    except ficha_service.ErrorFicha as exc:
+        return _render_formulario_ficha(
+            "crear", None, datos, [], set(), str(exc), 400
+        )
+    except Exception:
+        app.logger.exception("Error inesperado al crear una ficha")
+        return _render_formulario_ficha(
+            "crear",
+            None,
+            datos,
+            [],
+            set(),
+            "No se pudo guardar la ficha. Inténtalo de nuevo.",
+            500,
+        )
+    return redirect(
+        url_for("detalle_ficha", ficha_id=ficha_id, estado="creada")
+    )
+
+
+@app.get("/fichas/<int:ficha_id>")
+def detalle_ficha(ficha_id: int):
+    """Muestra todos los datos y fotografías de una ficha."""
+    ficha = database.obtener_ficha(ficha_id)
+    if ficha is None:
+        abort(404)
+    mensaje = MENSAJES_ESTADO.get(request.args.get("estado", ""))
+    return render_template(
+        "ficha_detalle.html",
+        ficha=ficha,
+        fotos_ficha=database.listar_fotos_ficha(ficha_id),
+        mensaje=mensaje,
+    )
+
+
+@app.get("/fichas/<int:ficha_id>/editar")
+def editar_ficha(ficha_id: int):
+    """Muestra el formulario de edición de una ficha."""
+    ficha = database.obtener_ficha(ficha_id)
+    if ficha is None:
+        abort(404)
+    datos = {campo: ficha[campo] for campo in ficha_service.CAMPOS_FICHA}
+    return _render_formulario_ficha(
+        "editar",
+        ficha,
+        datos,
+        database.listar_fotos_ficha(ficha_id),
+        set(),
+    )
+
+
+@app.post("/fichas/<int:ficha_id>/editar")
+def actualizar_ficha(ficha_id: int):
+    """Actualiza una ficha, añade fotos y quita asociaciones."""
+    ficha = database.obtener_ficha(ficha_id)
+    if ficha is None:
+        abort(404)
+
+    datos = _datos_formulario_ficha()
+    quitar_ids = _fotos_a_quitar()
+    try:
+        ficha_service.actualizar_ficha(
+            ficha_id,
+            datos,
+            request.files.getlist("fotografias"),
+            quitar_ids,
+        )
+    except ficha_service.ErrorFicha as exc:
+        return _render_formulario_ficha(
+            "editar",
+            ficha,
+            datos,
+            database.listar_fotos_ficha(ficha_id),
+            quitar_ids,
+            str(exc),
+            400,
+        )
+    except Exception:
+        app.logger.exception("Error inesperado al actualizar una ficha")
+        return _render_formulario_ficha(
+            "editar",
+            ficha,
+            datos,
+            database.listar_fotos_ficha(ficha_id),
+            quitar_ids,
+            "No se pudo actualizar la ficha. Inténtalo de nuevo.",
+            500,
+        )
+    return redirect(
+        url_for("detalle_ficha", ficha_id=ficha_id, estado="actualizada")
+    )
+
+
+@app.get("/fichas/<int:ficha_id>/eliminar")
+def confirmar_eliminar_ficha(ficha_id: int):
+    """Muestra la confirmación antes de eliminar una ficha."""
+    ficha = database.obtener_ficha(ficha_id)
+    if ficha is None:
+        abort(404)
+    return render_template(
+        "ficha_eliminar.html",
+        ficha=ficha,
+        num_fotos=len(database.listar_fotos_ficha(ficha_id)),
+    )
+
+
+@app.post("/fichas/<int:ficha_id>/eliminar")
+def eliminar_ficha(ficha_id: int):
+    """Elimina una ficha sin tocar fotografías ni PDF históricos."""
+    if not ficha_service.eliminar_ficha(ficha_id):
+        abort(404)
+    return redirect(url_for("lista_fichas", estado="eliminada"))
 
 
 @app.post("/importar")
@@ -177,7 +405,7 @@ def descargar_documento(nombre: str):
 def archivo_demasiado_grande(_error):
     """Muestra un mensaje claro si Flask rechaza la subida por tamaño."""
     return _pagina(
-        error="El archivo ZIP supera el tamaño máximo permitido (200 MB).",
+        error="La subida supera el tamaño máximo permitido (200 MB).",
         codigo=413,
     )
 

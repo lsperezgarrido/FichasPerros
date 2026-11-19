@@ -107,7 +107,7 @@ def _importar_desde_zip(archivo_zip: zipfile.ZipFile) -> ResultadoImportacion:
                 resultado.descartadas += 1
                 continue
 
-            formato = _validar_imagen(datos)
+            formato = validar_imagen(datos)
             if formato is None:
                 resultado.descartadas += 1
                 continue
@@ -117,7 +117,7 @@ def _importar_desde_zip(archivo_zip: zipfile.ZipFile) -> ResultadoImportacion:
                 resultado.duplicadas += 1
                 continue
 
-            nombre_interno, ruta_fisica = _guardar_imagen(datos, formato, fotos_dir)
+            nombre_interno, ruta_fisica = guardar_imagen(datos, formato, fotos_dir)
             archivos_creados.append(ruta_fisica)
             nombre_original = PurePosixPath(info.filename).name
             registros.append(
@@ -184,7 +184,7 @@ def _leer_miembro(archivo_zip: zipfile.ZipFile, info: zipfile.ZipInfo) -> bytes 
     return datos
 
 
-def _validar_imagen(datos: bytes) -> str | None:
+def validar_imagen(datos: bytes) -> str | None:
     """Devuelve el formato real de la imagen o ``None`` si no es válida."""
     try:
         with Image.open(io.BytesIO(datos)) as imagen:
@@ -205,7 +205,7 @@ def _validar_imagen(datos: bytes) -> str | None:
         return None
 
 
-def _guardar_imagen(datos: bytes, formato: str, fotos_dir: Path) -> tuple[str, Path]:
+def guardar_imagen(datos: bytes, formato: str, fotos_dir: Path) -> tuple[str, Path]:
     """Guarda los bytes originales con un nombre interno único."""
     extension = EXTENSION_POR_FORMATO[formato]
     while True:
