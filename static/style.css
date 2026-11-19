@@ -379,9 +379,36 @@ button:disabled:hover {
     line-height: 1.6;
 }
 
-.resumen-nota {
+#generar-pdf {
+    margin-top: 2px;
+}
+
+.pdf-status {
+    margin-top: 12px;
     color: var(--muted);
     font-size: 0.88rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.pdf-status.is-error {
+    color: #823b28;
+}
+
+.download-link {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 8px 12px;
+    background: var(--accent);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.download-link:hover {
+    background: var(--accent-dark);
 }
 
 .status {

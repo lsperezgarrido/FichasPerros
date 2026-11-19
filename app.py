@@ -2,10 +2,20 @@
 
 import io
 
-from flask import Flask, abort, render_template, request, send_file
+from flask import (
+    Flask,
+    abort,
+    jsonify,
+    render_template,
+    request,
+    send_file,
+    send_from_directory,
+    url_for,
+)
 from PIL import Image, ImageOps, UnidentifiedImageError
 
 import database
+import pdf_generator
 import whatsapp_import
 
 app = Flask(__name__)
@@ -91,6 +101,76 @@ def miniatura(foto_id: int):
         abort(404)
 
     return send_file(buffer, mimetype="image/jpeg", max_age=3600)
+
+
+@app.post("/generar-pdf")
+def generar_documento_pdf():
+    """Genera un PDF nuevo con las fotografías seleccionadas."""
+    ids = []
+    for valor in request.form.getlist("foto_ids"):
+        try:
+            foto_id = int(valor)
+        except (TypeError, ValueError):
+            return jsonify({"error": "La selección de fotografías no es válida."}), 400
+        if foto_id not in ids:
+            ids.append(foto_id)
+
+    if not ids:
+        return jsonify({"error": "Selecciona al menos una fotografía."}), 400
+
+    fotos = []
+    for foto_id in ids:
+        foto = database.obtener_foto(foto_id)
+        if foto is None:
+            return (
+                jsonify(
+                    {
+                        "error": (
+                            "Alguna fotografía seleccionada ya no está disponible."
+                        )
+                    }
+                ),
+                400,
+            )
+        fotos.append(foto)
+
+    try:
+        resultado = pdf_generator.generar_pdf(
+            fotos,
+            database.DATA_DIR,
+            database.BASE_DIR / "documentos",
+        )
+    except Exception:
+        app.logger.exception("Error inesperado durante la generación del PDF")
+        return (
+            jsonify({"error": "No se pudo generar el PDF. Inténtalo de nuevo."}),
+            500,
+        )
+
+    return jsonify(
+        {
+            "nombre": resultado.ruta.name,
+            "url": url_for(
+                "descargar_documento",
+                nombre=resultado.ruta.name,
+            ),
+            "paginas": resultado.paginas,
+            "fichas": resultado.fichas,
+        }
+    )
+
+
+@app.get("/documentos/<nombre>")
+def descargar_documento(nombre: str):
+    """Descarga un documento PDF generado por la aplicación."""
+    if not nombre.startswith("fichas_") or not nombre.lower().endswith(".pdf"):
+        abort(404)
+    return send_from_directory(
+        database.BASE_DIR / "documentos",
+        nombre,
+        as_attachment=True,
+        max_age=0,
+    )
 
 
 @app.errorhandler(413)

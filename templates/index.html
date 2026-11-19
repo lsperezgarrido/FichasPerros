@@ -114,9 +114,8 @@
                     <span id="resumen-texto">fotografías seleccionadas</span>.
                 </p>
                 <ul id="resumen-nombres" class="resumen-nombres"></ul>
-                <p class="resumen-nota">
-                    Están preparadas para generar un nuevo documento en la siguiente fase.
-                </p>
+                <button type="button" id="generar-pdf">Generar PDF</button>
+                <div id="estado-pdf" class="pdf-status" role="status" aria-live="polite"></div>
             </section>
             {% else %}
             <p class="empty-state">
@@ -131,7 +130,8 @@
         </div>
 
         <p class="note">
-            La generación de fichas PDF se añadirá en una fase posterior.
+            Cada PDF generado se guarda como un documento independiente listo
+            para imprimir en A4.
         </p>
     </main>
 </body>

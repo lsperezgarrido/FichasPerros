@@ -17,6 +17,8 @@
     const resumenCantidad = document.getElementById("resumen-cantidad");
     const resumenTexto = document.getElementById("resumen-texto");
     const resumenNombres = document.getElementById("resumen-nombres");
+    const botonPdf = document.getElementById("generar-pdf");
+    const estadoPdf = document.getElementById("estado-pdf");
 
     if (
         checkboxes.length === 0 ||
@@ -29,7 +31,9 @@
         !resumen ||
         !resumenCantidad ||
         !resumenTexto ||
-        !resumenNombres
+        !resumenNombres ||
+        !botonPdf ||
+        !estadoPdf
     ) {
         return;
     }
@@ -44,9 +48,17 @@
         botonNinguna.disabled = total === 0;
     }
 
+    function prepararBotonPdf() {
+        estadoPdf.replaceChildren();
+        estadoPdf.classList.remove("is-error");
+        botonPdf.disabled = false;
+        botonPdf.textContent = "Generar PDF";
+    }
+
     function ocultarMensajes() {
         aviso.hidden = true;
         resumen.hidden = true;
+        prepararBotonPdf();
     }
 
     function actualizarSeleccion() {
@@ -91,9 +103,69 @@
         resumenCantidad.textContent = String(elegidas.length);
         resumenTexto.textContent =
             elegidas.length === 1 ? "fotografía seleccionada" : "fotografías seleccionadas";
+        prepararBotonPdf();
         aviso.hidden = true;
         resumen.hidden = false;
         resumen.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+
+    botonPdf.addEventListener("click", async () => {
+        const elegidas = seleccionadas();
+        if (elegidas.length === 0) {
+            resumen.hidden = true;
+            aviso.textContent = "Selecciona al menos una fotografía para generar el PDF.";
+            aviso.hidden = false;
+            return;
+        }
+
+        const datos = new FormData();
+        elegidas.forEach((checkbox) => {
+            datos.append("foto_ids", checkbox.value);
+        });
+
+        botonPdf.disabled = true;
+        botonPdf.textContent = "Generando PDF…";
+        estadoPdf.replaceChildren();
+        estadoPdf.classList.remove("is-error");
+
+        try {
+            const respuesta = await fetch("/generar-pdf", {
+                method: "POST",
+                body: datos,
+            });
+            let resultado = {};
+            try {
+                resultado = await respuesta.json();
+            } catch (_error) {
+                resultado = {};
+            }
+            if (!respuesta.ok) {
+                throw new Error(resultado.error || "No se pudo generar el PDF.");
+            }
+
+            const texto = document.createElement("span");
+            const fichas = resultado.fichas;
+            const paginas = resultado.paginas;
+            texto.textContent =
+                `PDF generado: ${resultado.nombre} ` +
+                `(${fichas} ${fichas === 1 ? "ficha" : "fichas"}, ` +
+                `${paginas} ${paginas === 1 ? "página" : "páginas"}). `;
+
+            const enlace = document.createElement("a");
+            enlace.href = resultado.url;
+            enlace.download = resultado.nombre;
+            enlace.className = "download-link";
+            enlace.textContent = "Descargar PDF";
+
+            estadoPdf.append(texto, enlace);
+            botonPdf.textContent = "Generar otro PDF";
+        } catch (error) {
+            estadoPdf.classList.add("is-error");
+            estadoPdf.textContent = error.message || "No se pudo generar el PDF.";
+            botonPdf.textContent = "Generar PDF";
+        } finally {
+            botonPdf.disabled = false;
+        }
     });
 
     actualizarContador();

@@ -3,9 +3,8 @@
 Aplicación local para Windows destinada a importar fotografías de perros desde
 exportaciones ZIP de WhatsApp y generar fichas imprimibles en PDF.
 
-Actualmente la aplicación permite importar fotografías, evita duplicados
-mediante su hash SHA-256 y permite seleccionar las imágenes que se usarán en
-las fichas. La generación de PDF se añadirá en una fase posterior.
+La aplicación permite importar fotografías, evita duplicados mediante su hash
+SHA-256, seleccionar las imágenes y generar un PDF de fichas imprimibles en A4.
 
 ## Requisitos
 
@@ -48,7 +47,8 @@ pulsar `Ctrl+C` en la terminal.
 2. Pulsar «Importar fotografías».
 3. Consultar el resumen: encontradas, nuevas, duplicadas, descartadas y errores.
 4. En la galería, seleccionar las fotografías que se quieran usar.
-5. Pulsar «Continuar con las seleccionadas» para ver el resumen provisional.
+5. Pulsar «Continuar con las seleccionadas» para comprobar el resumen.
+6. Pulsar «Generar PDF» y descargar el documento generado.
 
 Las imágenes se guardan en `data/fotos` con nombres internos únicos. En SQLite
 se conserva el nombre original del archivo del ZIP y la ruta interna. Los
@@ -59,12 +59,24 @@ hash, aunque tengan nombres diferentes.
 
 La galería muestra una miniatura, el nombre original y una casilla por cada
 fotografía. El contador, «Seleccionar todas» y «Deseleccionar todas» funcionan
-en el navegador sin modificar la base de datos. El resumen provisional muestra
-las fotografías elegidas y las deja preparadas para la siguiente fase.
+en el navegador sin modificar la base de datos. El resumen muestra las
+fotografías elegidas y permite generar el documento.
 
 Las miniaturas se generan en memoria a partir de la imagen original. Se piden
 por el identificador de SQLite y solo se sirven archivos situados dentro de
 `data/fotos`.
+
+## Generación de PDF
+
+Cada fotografía seleccionada ocupa una ficha. El documento se compone en A4
+vertical, con cuatro fichas iguales por página, márgenes de 12 mm y líneas
+finas para recortar. Cada ficha tiene la fotografía en el tercio izquierdo y
+los campos LUGAR DE RECOGIDA, FECHA DE RECOGIDA, Nº MICROCHIP y OBSERVACIONES
+en el tercio derecho. Las filas que sobran en la última página quedan vacías.
+
+Los documentos se guardan en `documentos/` con un nombre único. Las imágenes
+originales de `data/fotos` no se modifican. El documento generado se descarga
+desde la propia interfaz.
 
 ## Seguridad de la importación
 
@@ -83,7 +95,8 @@ por el identificador de SQLite y solo se sirven archivos situados dentro de
 ```
 
 Incluye comprobaciones de importación, duplicados, apertura de las imágenes
-guardadas, conservación de hashes y rechazo de ZIP maliciosos.
+guardadas, conservación de hashes y rechazo de ZIP maliciosos. La generación
+de PDF se ha validado con 1, 3, 4, 5, 6 y 10 fotografías.
 
 ## Estructura
 
@@ -92,7 +105,7 @@ FichasPerros/
 ├── app.py                 # Aplicación Flask
 ├── database.py            # Conexión y esquema SQLite
 ├── whatsapp_import.py     # Importación segura de ZIP
-├── pdf_generator.py       # Reservado para la generación de PDF
+├── pdf_generator.py       # Generación de fichas A4 en PDF
 ├── requirements.txt
 ├── README.md
 ├── templates/
@@ -111,6 +124,6 @@ FichasPerros/
     └── CREDITOS.md
 ```
 
-La base de datos y las fotografías son datos locales y no se incluyen en Git.
-Las fotografías de los ZIP de prueba proceden de Wikimedia Commons; sus
-autores y licencias se detallan en `pruebas/CREDITOS.md`.
+La base de datos, las fotografías y los PDF generados son datos locales y no se
+incluyen en Git. Las fotografías de los ZIP de prueba proceden de Wikimedia
+Commons; sus autores y licencias se detallan en `pruebas/CREDITOS.md`.
