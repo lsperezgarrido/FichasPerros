@@ -4,7 +4,9 @@
     --ink: #2c2924;
     --muted: #6d675e;
     --accent: #426b55;
+    --accent-dark: #31513f;
     --line: #ded6ca;
+    --soft: #f7f2e9;
 }
 
 * {
@@ -23,8 +25,8 @@ body {
 }
 
 .card {
-    width: min(100%, 620px);
-    padding: 48px;
+    width: min(100%, 760px);
+    padding: 46px;
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 18px;
@@ -47,18 +49,146 @@ h1 {
     letter-spacing: -0.03em;
 }
 
+h2 {
+    margin: 0 0 14px;
+    font-size: 1.15rem;
+    line-height: 1.3;
+}
+
 .intro {
-    max-width: 48ch;
+    max-width: 56ch;
     margin: 20px 0 30px;
     color: var(--muted);
     font-size: 1.05rem;
     line-height: 1.6;
 }
 
+.import-section,
+.resultado {
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+}
+
+.import-form {
+    display: grid;
+    gap: 14px;
+}
+
+.file-field {
+    display: grid;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.file-field input[type="file"] {
+    width: 100%;
+    padding: 12px;
+    background: var(--soft);
+    border: 1px dashed #c9bfaf;
+    border-radius: 10px;
+    color: var(--ink);
+    font: inherit;
+    font-weight: 400;
+}
+
+.file-field input[type="file"]::file-selector-button {
+    margin-right: 12px;
+    padding: 8px 12px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    color: var(--ink);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+button {
+    padding: 13px 20px;
+    background: var(--accent);
+    border: 0;
+    border-radius: 10px;
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 150ms ease, transform 150ms ease;
+}
+
+button:hover {
+    background: var(--accent-dark);
+}
+
+button:active {
+    transform: translateY(1px);
+}
+
+button:focus-visible,
+.file-field input[type="file"]:focus-visible {
+    outline: 3px solid rgba(66, 107, 85, 0.35);
+    outline-offset: 2px;
+}
+
+.formats {
+    margin: 12px 0 0;
+    color: var(--muted);
+    font-size: 0.82rem;
+}
+
+.alert {
+    margin-top: 24px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+.alert-error {
+    background: #fbeeea;
+    border: 1px solid #e7c4ba;
+    color: #823b28;
+}
+
+.resultado {
+    margin-top: 28px;
+}
+
+.metrics {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+}
+
+.metrics div {
+    padding: 14px 10px;
+    background: var(--soft);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    text-align: center;
+}
+
+.metrics dt {
+    color: var(--muted);
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+.metrics dd {
+    margin: 6px 0 0;
+    color: var(--accent);
+    font-size: 1.55rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
 .status {
     display: inline-flex;
     align-items: center;
     gap: 10px;
+    margin-top: 30px;
     padding: 10px 14px;
     background: #edf4ef;
     border: 1px solid #cddfd2;
@@ -76,14 +206,18 @@ h1 {
 }
 
 .note {
-    margin: 28px 0 0;
+    margin: 22px 0 0;
     color: var(--muted);
     font-size: 0.88rem;
     line-height: 1.5;
 }
 
-@media (max-width: 520px) {
+@media (max-width: 640px) {
     .card {
         padding: 30px 24px;
+    }
+
+    .metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
