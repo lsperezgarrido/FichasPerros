@@ -10,7 +10,8 @@ PDF de fichas imprimibles en A4.
 ## Requisitos
 
 - Windows 10 u 11.
-- Python 3.12.
+- Para el modo ventana: Microsoft Edge instalado (forma parte de Windows 10/11).
+- Python 3.12 para ejecutar desde el código fuente.
 - Conexión a Internet únicamente para instalar las dependencias. La aplicación
   funciona después sin conexión.
 
@@ -41,6 +42,18 @@ python app.py
 
 Abrir <http://127.0.0.1:5000> en el navegador. Para detener la aplicación,
 pulsar `Ctrl+C` en la terminal.
+
+## Aplicación de escritorio
+
+Hacer doble clic en `FichasPerros.pyw`. Se inicia Flask en un puerto local
+disponible y se abre una ventana propia con Microsoft Edge en modo aplicación,
+sin barra de direcciones ni pestañas. Al cerrar la ventana, Flask se detiene.
+
+El archivo `.pyw` usa `pythonw`, por lo que no muestra una consola. Durante el
+desarrollo, si Windows lo abre con otro Python, el lanzador vuelve a ejecutarse
+utilizando `.venv\Scripts\pythonw.exe`.
+
+La ventana no usa Internet y no abre el navegador habitual.
 
 ## Uso
 
@@ -121,26 +134,39 @@ desde la propia interfaz.
 ```
 
 Incluye comprobaciones de importación, duplicados, apertura de las imágenes
-guardadas, conservación de hashes, rechazo de ZIP maliciosos y gestión de
-fichas. La generación de PDF se ha validado con 1, 3, 4, 5, 6 y 10 fotografías.
+guardadas, conservación de hashes, rechazo de ZIP maliciosos, gestión de fichas
+y ciclo de vida del servidor de escritorio. La generación de PDF se ha validado
+con 1, 3, 4, 5, 6 y 10 fotografías.
 
 ## Datos y compatibilidad
 
 La base de datos existente se conserva. Se añadieron las tablas `fichas` y
 `ficha_fotos`; la tabla `fotos` y las fotografías ya importadas no se
-modificaron. No se añadieron dependencias.
+modificaron. No se añadieron dependencias de Python.
 
-Las rutas de datos se calculan desde la ubicación del proyecto. Si la
-aplicación se ejecuta como un ejecutable de PyInstaller, `data/` y
-`documentos/` se sitúan junto al `.exe`, separados del código empaquetado. El
-empaquetado definitivo se realizará en una fase posterior.
+Durante el desarrollo se mantienen las carpetas actuales del proyecto:
+`data/` y `documentos/`.
+
+Cuando la aplicación esté empaquetada, los datos persistentes se guardarán en:
+
+```text
+%LOCALAPPDATA%\FichasPerros\
+├── fichas.db
+├── fotos\
+└── documentos\
+```
+
+Las rutas se calculan sin depender del directorio de ejecución ni de `_MEIPASS`.
+El empaquetado definitivo con PyInstaller se realizará en una fase posterior.
 
 ## Estructura
 
 ```text
 FichasPerros/
 ├── app.py                 # Aplicación Flask
-├── database.py            # Conexión y esquema SQLite
+├── database.py            # Conexión, esquema y rutas persistentes
+├── desktop.py             # Servidor local + ventana de escritorio
+├── FichasPerros.pyw       # Entrada de doble clic sin consola
 ├── ficha_service.py       # Creación, edición y borrado de fichas
 ├── whatsapp_import.py     # Importación segura de ZIP
 ├── pdf_generator.py       # Generación de fichas A4 en PDF
@@ -166,6 +192,7 @@ FichasPerros/
     ├── exportacion_whatsapp_02.zip
     ├── test_importacion.py
     ├── test_fichas.py
+    ├── test_desktop.py
     └── CREDITOS.md
 ```
 

@@ -1,18 +1,29 @@
 """Acceso a la base de datos SQLite local."""
 
+import os
 import sqlite3
 import sys
 from datetime import datetime
 from pathlib import Path
 
-# En un ejecutable de PyInstaller, los datos persistentes deben quedar junto
-# al .exe y no dentro de la carpeta temporal de la aplicación.
-BASE_DIR = (
-    Path(sys.executable).resolve().parent
-    if getattr(sys, "frozen", False)
-    else Path(__file__).resolve().parent
+PROJECT_DIR = Path(__file__).resolve().parent
+
+
+def _resolver_directorios(empaquetado: bool, local_appdata: str | None, proyecto: Path):
+    """Separa datos persistentes de los recursos del ejecutable."""
+    if empaquetado:
+        base = Path(local_appdata or Path.home() / "AppData" / "Local") / "FichasPerros"
+        return base, base, base / "documentos"
+    return proyecto, proyecto / "data", proyecto / "documentos"
+
+
+# Durante el desarrollo se mantienen las carpetas actuales del proyecto. En un
+# ejecutable, la base de datos, las fotos y los PDF van a %LOCALAPPDATA%.
+BASE_DIR, DATA_DIR, DOCUMENTOS_DIR = _resolver_directorios(
+    bool(getattr(sys, "frozen", False)),
+    os.environ.get("LOCALAPPDATA"),
+    PROJECT_DIR,
 )
-DATA_DIR = BASE_DIR / "data"
 DB_PATH = DATA_DIR / "fichas.db"
 
 SCHEMA = """

@@ -366,7 +366,7 @@ def generar_documento_pdf():
         resultado = pdf_generator.generar_pdf(
             fotos,
             database.DATA_DIR,
-            database.BASE_DIR / "documentos",
+            database.DOCUMENTOS_DIR,
         )
     except Exception:
         app.logger.exception("Error inesperado durante la generación del PDF")
@@ -394,7 +394,7 @@ def descargar_documento(nombre: str):
     if not nombre.startswith("fichas_") or not nombre.lower().endswith(".pdf"):
         abort(404)
     return send_from_directory(
-        database.BASE_DIR / "documentos",
+        database.DOCUMENTOS_DIR,
         nombre,
         as_attachment=True,
         max_age=0,
