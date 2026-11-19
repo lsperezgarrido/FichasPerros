@@ -184,6 +184,206 @@ button:focus-visible,
     line-height: 1;
 }
 
+.galeria {
+    margin-top: 30px;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+}
+
+.galeria-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.galeria-header h2 {
+    margin: 0;
+}
+
+.badge {
+    flex: 0 0 auto;
+    padding: 6px 10px;
+    background: var(--soft);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.selection-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 14px;
+    background: var(--soft);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+}
+
+.selection-count {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.selection-count strong {
+    color: var(--accent);
+    font-size: 1.3rem;
+}
+
+.selection-total {
+    color: var(--muted);
+}
+
+.selection-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.selection-actions button {
+    padding: 10px 14px;
+    font-size: 0.86rem;
+}
+
+.button-secondary {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--ink);
+}
+
+.button-secondary:hover {
+    background: #eee7dc;
+}
+
+button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+}
+
+button:disabled:hover {
+    background: var(--accent);
+}
+
+.button-secondary:disabled:hover {
+    background: var(--surface);
+}
+
+.galeria-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 12px;
+}
+
+.foto-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+}
+
+.foto-thumb {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 170px;
+    padding: 8px;
+    background: #f1ece2;
+    cursor: pointer;
+}
+
+.foto-thumb img {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.foto-meta {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px;
+    border-top: 1px solid var(--line);
+}
+
+.foto-check {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    margin: 2px 0 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.foto-name {
+    min-width: 0;
+    color: var(--ink);
+    font-size: 0.8rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+}
+
+.empty-state {
+    margin: 0;
+    padding: 24px;
+    background: var(--soft);
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    color: var(--muted);
+    text-align: center;
+}
+
+#aviso-seleccion {
+    margin-top: 18px;
+}
+
+.resumen-seleccion {
+    margin-top: 18px;
+    padding: 20px;
+    background: #edf4ef;
+    border: 1px solid #cddfd2;
+    border-radius: 12px;
+}
+
+.resumen-seleccion h3 {
+    margin: 0 0 10px;
+    font-size: 1rem;
+}
+
+.resumen-seleccion p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.resumen-nombres {
+    max-height: 180px;
+    margin: 14px 0;
+    padding-left: 20px;
+    overflow-y: auto;
+    color: var(--muted);
+    font-size: 0.88rem;
+    line-height: 1.6;
+}
+
+.resumen-nota {
+    color: var(--muted);
+    font-size: 0.88rem;
+}
+
 .status {
     display: inline-flex;
     align-items: center;
@@ -219,5 +419,25 @@ button:focus-visible,
 
     .metrics {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .galeria-header {
+        align-items: flex-start;
+    }
+
+    .selection-actions {
+        width: 100%;
+    }
+
+    .selection-actions button {
+        flex: 1 1 auto;
+    }
+
+    .galeria-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .foto-thumb {
+        height: 150px;
     }
 }

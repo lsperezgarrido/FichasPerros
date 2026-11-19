@@ -3,8 +3,9 @@
 Aplicación local para Windows destinada a importar fotografías de perros desde
 exportaciones ZIP de WhatsApp y generar fichas imprimibles en PDF.
 
-Actualmente la aplicación permite importar fotografías y evita duplicados
-mediante su hash SHA-256. La generación de PDF se añadirá en una fase posterior.
+Actualmente la aplicación permite importar fotografías, evita duplicados
+mediante su hash SHA-256 y permite seleccionar las imágenes que se usarán en
+las fichas. La generación de PDF se añadirá en una fase posterior.
 
 ## Requisitos
 
@@ -46,11 +47,24 @@ pulsar `Ctrl+C` en la terminal.
 1. Seleccionar un ZIP de exportación de WhatsApp.
 2. Pulsar «Importar fotografías».
 3. Consultar el resumen: encontradas, nuevas, duplicadas, descartadas y errores.
+4. En la galería, seleccionar las fotografías que se quieran usar.
+5. Pulsar «Continuar con las seleccionadas» para ver el resumen provisional.
 
 Las imágenes se guardan en `data/fotos` con nombres internos únicos. En SQLite
 se conserva el nombre original del archivo del ZIP y la ruta interna. Los
 archivos originales no se modifican y las imágenes repetidas se detectan por
 hash, aunque tengan nombres diferentes.
+
+## Galería y selección
+
+La galería muestra una miniatura, el nombre original y una casilla por cada
+fotografía. El contador, «Seleccionar todas» y «Deseleccionar todas» funcionan
+en el navegador sin modificar la base de datos. El resumen provisional muestra
+las fotografías elegidas y las deja preparadas para la siguiente fase.
+
+Las miniaturas se generan en memoria a partir de la imagen original. Se piden
+por el identificador de SQLite y solo se sirven archivos situados dentro de
+`data/fotos`.
 
 ## Seguridad de la importación
 
@@ -84,7 +98,8 @@ FichasPerros/
 ├── templates/
 │   └── index.html
 ├── static/
-│   └── style.css
+│   ├── style.css
+│   └── gallery.js
 ├── data/
 │   ├── fotos/             # Fotografías importadas
 │   └── fichas.db          # Base de datos (se crea al arrancar)

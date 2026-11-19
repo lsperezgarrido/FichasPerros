@@ -34,3 +34,27 @@ def init_db():
         connection.commit()
     finally:
         connection.close()
+
+
+def listar_fotos():
+    """Devuelve todas las fotografías ordenadas por importación."""
+    connection = get_connection()
+    try:
+        return connection.execute(
+            "SELECT id, nombre_archivo, ruta, fecha_importacion "
+            "FROM fotos ORDER BY id"
+        ).fetchall()
+    finally:
+        connection.close()
+
+
+def obtener_foto(foto_id: int):
+    """Devuelve una fotografía por su identificador o ``None``."""
+    connection = get_connection()
+    try:
+        return connection.execute(
+            "SELECT id, nombre_archivo, ruta FROM fotos WHERE id = ?",
+            (foto_id,),
+        ).fetchone()
+    finally:
+        connection.close()

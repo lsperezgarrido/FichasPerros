@@ -1,6 +1,9 @@
 """Aplicación Flask local de FichasPerros."""
 
-from flask import Flask, render_template, request
+import io
+
+from flask import Flask, abort, render_template, request, send_file
+from PIL import Image, ImageOps, UnidentifiedImageError
 
 import database
 import whatsapp_import
@@ -12,14 +15,19 @@ database.init_db()
 
 def _pagina(resultado=None, error=None, codigo=200):
     return (
-        render_template("index.html", resultado=resultado, error=error),
+        render_template(
+            "index.html",
+            resultado=resultado,
+            error=error,
+            fotos=database.listar_fotos(),
+        ),
         codigo,
     )
 
 
 @app.get("/")
 def index():
-    """Muestra la pantalla principal."""
+    """Muestra la pantalla principal con la galería."""
     return _pagina()
 
 
@@ -43,6 +51,46 @@ def importar():
             codigo=500,
         )
     return _pagina(resultado=resultado)
+
+
+@app.get("/fotos/<int:foto_id>/miniatura")
+def miniatura(foto_id: int):
+    """Sirve una miniatura de una fotografía registrada en SQLite."""
+    foto = database.obtener_foto(foto_id)
+    if foto is None:
+        abort(404)
+
+    directorio_fotos = (database.DATA_DIR / "fotos").resolve()
+    ruta = (database.DATA_DIR / foto["ruta"]).resolve()
+    if not ruta.is_relative_to(directorio_fotos) or not ruta.is_file():
+        abort(404)
+
+    try:
+        with Image.open(ruta) as imagen:
+            imagen = ImageOps.exif_transpose(imagen)
+            imagen.thumbnail((400, 400), Image.Resampling.LANCZOS)
+            if imagen.mode in {"RGBA", "LA"} or (
+                imagen.mode == "P" and "transparency" in imagen.info
+            ):
+                imagen = imagen.convert("RGBA")
+                fondo = Image.new("RGB", imagen.size, "white")
+                fondo.paste(imagen, mask=imagen.getchannel("A"))
+                imagen = fondo
+            elif imagen.mode != "RGB":
+                imagen = imagen.convert("RGB")
+            buffer = io.BytesIO()
+            imagen.save(buffer, "JPEG", quality=85, optimize=True)
+            buffer.seek(0)
+    except (
+        UnidentifiedImageError,
+        OSError,
+        ValueError,
+        SyntaxError,
+        Image.DecompressionBombError,
+    ):
+        abort(404)
+
+    return send_file(buffer, mimetype="image/jpeg", max_age=3600)
 
 
 @app.errorhandler(413)

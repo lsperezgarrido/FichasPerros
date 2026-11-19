@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Fichas de perros</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='gallery.js') }}" defer></script>
 </head>
 <body>
     <main class="card">
@@ -12,8 +13,9 @@
         <h1>Fichas de perros</h1>
         <p class="intro">
             Importa las fotografías de una exportación ZIP de WhatsApp.
-            Las imágenes nuevas se guardan localmente y los duplicados se
-            detectan automáticamente.
+            Las imágenes nuevas se guardan localmente, los duplicados se
+            detectan automáticamente y puedes elegir las fotografías que
+            formarán parte de las fichas.
         </p>
 
         <section class="import-section" aria-labelledby="import-title">
@@ -61,6 +63,67 @@
             </dl>
         </section>
         {% endif %}
+
+        <section class="galeria" aria-labelledby="galeria-title">
+            <div class="galeria-header">
+                <h2 id="galeria-title">Fotografías importadas</h2>
+                <span class="badge">
+                    {{ fotos|length }} {% if fotos|length == 1 %}fotografía{% else %}fotografías{% endif %}
+                </span>
+            </div>
+
+            {% if fotos %}
+            <div class="selection-toolbar">
+                <p class="selection-count" aria-live="polite">
+                    <strong id="contador-seleccionadas">0</strong>
+                    <span id="texto-contador">seleccionadas</span>
+                    <span class="selection-total">de {{ fotos|length }}</span>
+                </p>
+                <div class="selection-actions">
+                    <button class="button-secondary" type="button" id="seleccionar-todas">Seleccionar todas</button>
+                    <button class="button-secondary" type="button" id="deseleccionar-todas">Deseleccionar todas</button>
+                    <button type="button" id="continuar-seleccion">Continuar con las seleccionadas</button>
+                </div>
+            </div>
+
+            <div class="galeria-grid">
+                {% for foto in fotos %}
+                <article class="foto-card">
+                    <label class="foto-thumb" for="foto-{{ foto.id }}">
+                        <img src="{{ url_for('miniatura', foto_id=foto.id) }}"
+                             alt="Fotografía de perro: {{ foto.nombre_archivo }}"
+                             loading="lazy" decoding="async">
+                    </label>
+                    <div class="foto-meta">
+                        <input class="foto-check" id="foto-{{ foto.id }}" type="checkbox"
+                               value="{{ foto.id }}" data-nombre="{{ foto.nombre_archivo }}">
+                        <label class="foto-name" for="foto-{{ foto.id }}" title="{{ foto.nombre_archivo }}">
+                            {{ foto.nombre_archivo }}
+                        </label>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+
+            <div id="aviso-seleccion" class="alert alert-error" role="alert" hidden></div>
+
+            <section id="resumen-seleccion" class="resumen-seleccion" aria-live="polite" hidden>
+                <h3>Fotografías preparadas</h3>
+                <p>
+                    <strong id="resumen-cantidad">0</strong>
+                    <span id="resumen-texto">fotografías seleccionadas</span>.
+                </p>
+                <ul id="resumen-nombres" class="resumen-nombres"></ul>
+                <p class="resumen-nota">
+                    Están preparadas para generar un nuevo documento en la siguiente fase.
+                </p>
+            </section>
+            {% else %}
+            <p class="empty-state">
+                Todavía no hay fotografías importadas. Añade un ZIP para empezar.
+            </p>
+            {% endif %}
+        </section>
 
         <div class="status">
             <span class="dot" aria-hidden="true"></span>
