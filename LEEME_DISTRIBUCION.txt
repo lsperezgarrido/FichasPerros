@@ -1,0 +1,47 @@
+﻿FichasPerros
+============
+
+Aplicación local para gestionar fichas de perros e imprimirlas en PDF.
+
+REQUISITOS
+----------
+
+- Windows 10 u 11.
+- Microsoft Edge instalado (forma parte de Windows 10/11).
+- No es necesario instalar Python.
+- No se necesita una conexión a Internet para usar la aplicación.
+
+CÓMO ABRIR
+----------
+
+1. Descomprimir o copiar la carpeta completa FichasPerros.
+2. Hacer doble clic en FichasPerros.exe.
+3. Esperar unos segundos: se abrirá una ventana propia sin consola.
+4. Al terminar, cerrar la ventana. La aplicación se detiene sola.
+
+Es necesario conservar la carpeta _internal junto al ejecutable. No mover
+únicamente FichasPerros.exe a otro sitio.
+
+Si Windows muestra una advertencia de seguridad porque el ejecutable no tiene
+firma digital, pulsar "Más información" y después "Ejecutar de todas formas".
+Es habitual en programas pequeños distribuidos sin certificado de firma.
+
+DÓNDE SE GUARDAN LOS DATOS
+--------------------------
+
+Los datos se guardan en:
+
+    %LOCALAPPDATA%\FichasPerros\
+
+Contiene:
+
+    fichas.db       Base de datos
+    fotos\          Fotografías importadas
+    documentos\     PDF generados
+    edge-profile\   Perfil interno de la ventana
+
+No borrar esa carpeta si se quieren conservar las fichas. Hacer una copia de
+esa carpeta es suficiente para respaldar los datos.
+
+La carpeta del programa y %LOCALAPPDATA% son independientes: se puede mover o
+actualizar la aplicación sin perder los datos.

@@ -55,6 +55,55 @@ utilizando `.venv\Scripts\pythonw.exe`.
 
 La ventana no usa Internet y no abre el navegador habitual.
 
+Nota de compatibilidad: en el equipo de pruebas fue necesario que Edge
+arrancase con el sandbox de Chromium desactivado para poder renderizar. La
+ventana solo carga contenido local de `127.0.0.1` y no navega a sitios
+externos.
+
+## Distribución Windows
+
+La distribución se genera con PyInstaller en modo **onedir**:
+
+```text
+dist\FichasPerros\
+├── FichasPerros.exe
+├── LEEME.txt
+└── _internal\
+```
+
+El ejecutable no muestra consola y no necesita Python instalado. La carpeta
+completa debe distribuirse junta; no hay que separar el `.exe` de `_internal`.
+
+Para generar la distribución:
+
+```powershell
+.\build_windows.ps1
+```
+
+Si la política de ejecución de PowerShell bloquea el script:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build_windows.ps1
+```
+
+El script usa [FichasPerros.spec](FichasPerros.spec), copia el LEEME y crea
+`dist\FichasPerros_Windows.zip`.
+
+Se evaluó el modo onefile, pero en el equipo de pruebas no podía crear su
+carpeta temporal y fallaba antes de arrancar. El modo onedir evita esa
+extracción, arranca sin depender de `%TEMP%` y es más fiable para distribuir.
+El coste es que la entrega es una carpeta, no un único archivo.
+
+Requisitos para el voluntario:
+
+- Windows 10 u 11.
+- Microsoft Edge instalado.
+- No se necesita Python ni WebView2 adicional.
+- No se necesita conexión a Internet para usar la aplicación.
+
+El ejecutable no está firmado digitalmente. Si Windows muestra una advertencia
+de editor desconocido, hay que permitir su ejecución una vez.
+
 ## Uso
 
 ### Fichas
@@ -138,6 +187,11 @@ guardadas, conservación de hashes, rechazo de ZIP maliciosos, gestión de ficha
 y ciclo de vida del servidor de escritorio. La generación de PDF se ha validado
 con 1, 3, 4, 5, 6 y 10 fotografías.
 
+Además se probó la distribución onedir generada: arranque sin consola, ventana
+de Edge, navegación, creación de ficha, importación ZIP, PDF, ubicación de
+datos en LocalAppData, cierre sin procesos residuales y reapertura con
+persistencia.
+
 ## Datos y compatibilidad
 
 La base de datos existente se conserva. Se añadieron las tablas `fichas` y
@@ -167,6 +221,9 @@ FichasPerros/
 ├── database.py            # Conexión, esquema y rutas persistentes
 ├── desktop.py             # Servidor local + ventana de escritorio
 ├── FichasPerros.pyw       # Entrada de doble clic sin consola
+├── FichasPerros.spec      # Configuración de PyInstaller (onedir)
+├── build_windows.ps1      # Genera la distribución Windows
+├── LEEME_DISTRIBUCION.txt # Instrucciones para el voluntario
 ├── ficha_service.py       # Creación, edición y borrado de fichas
 ├── whatsapp_import.py     # Importación segura de ZIP
 ├── pdf_generator.py       # Generación de fichas A4 en PDF

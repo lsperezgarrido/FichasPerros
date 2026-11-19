@@ -20,6 +20,7 @@ documentos/*
 build/
 dist/
 *.spec
+!FichasPerros.spec
 
 # Sistema
 Thumbs.db
