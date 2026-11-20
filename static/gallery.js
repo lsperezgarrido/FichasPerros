@@ -153,9 +153,10 @@
 
             const enlace = document.createElement("a");
             enlace.href = resultado.url;
-            enlace.download = resultado.nombre;
+            enlace.target = "_blank";
+            enlace.rel = "noopener";
             enlace.className = "download-link";
-            enlace.textContent = "Descargar PDF";
+            enlace.textContent = "Abrir PDF";
 
             estadoPdf.append(texto, enlace);
             botonPdf.textContent = "Generar otro PDF";

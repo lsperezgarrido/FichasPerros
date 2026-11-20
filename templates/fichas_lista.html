@@ -8,7 +8,8 @@
         <p class="eyebrow">Gestión</p>
         <h1 class="page-title">Fichas</h1>
         <p class="intro">
-            Consulta, crea, edita o elimina las fichas de la protectora.
+            Cada hoja reúne hasta cuatro perros y su PDF. Consulta qué hojas
+            están generadas y cuáles siguen pendientes.
         </p>
     </div>
     <a class="button-link" href="{{ url_for('nueva_ficha') }}">Nueva ficha</a>
@@ -19,9 +20,9 @@
 {% endif %}
 
 <form class="search-form" method="get" action="{{ url_for('lista_fichas') }}">
-    <label class="sr-only" for="busqueda">Buscar fichas</label>
+    <label class="sr-only" for="busqueda">Buscar hojas</label>
     <input id="busqueda" type="search" name="q" value="{{ busqueda }}"
-           placeholder="Buscar por lugar, fecha, microchip, observaciones o número de ficha">
+           placeholder="Buscar por número de hoja, fecha o PDF">
     <button type="submit">Buscar</button>
     {% if busqueda %}
     <a class="button-link button-link-secondary" href="{{ url_for('lista_fichas') }}">Limpiar</a>
@@ -30,34 +31,37 @@
 
 <div class="list-summary">
     <span class="badge">
-        {{ fichas|length }} {% if fichas|length == 1 %}ficha{% else %}fichas{% endif %}
+        {{ hojas|length }} {% if hojas|length == 1 %}hoja{% else %}hojas{% endif %}
     </span>
     {% if busqueda %}
     <span class="muted">Resultados para «{{ busqueda }}»</span>
     {% endif %}
 </div>
 
-{% if fichas %}
+{% if hojas %}
 <div class="fichas-lista">
-    {% for ficha in fichas %}
-    <a class="ficha-resumen" href="{{ url_for('detalle_ficha', ficha_id=ficha.id) }}">
+    {% for hoja in hojas %}
+    <a class="ficha-resumen" href="{{ url_for('detalle_hoja', hoja_id=hoja.id) }}">
         <div class="ficha-resumen-texto">
-            <span class="ficha-id">Ficha #{{ ficha.id }}</span>
+            <span class="ficha-id">Hoja #{{ hoja.id }}</span>
             <strong class="ficha-titulo">
-                {{ ficha.lugar_recogida or "Sin lugar indicado" }}
+                {{ hoja.num_perros }} {% if hoja.num_perros == 1 %}perro{% else %}perros{% endif %}
             </strong>
             <span class="ficha-datos">
-                {% if ficha.fecha_recogida %}{{ ficha.fecha_recogida|fecha }}{% else %}Sin fecha{% endif %}
-                · {{ ficha.numero_microchip or "Sin microchip" }}
+                Creada el {{ hoja.fecha_creacion|fecha }}
             </span>
             <span class="ficha-meta">
-                {{ ficha.num_fotos }} {% if ficha.num_fotos == 1 %}fotografía{% else %}fotografías{% endif %}
+                {% if hoja.nombre_pdf %}
+                <span class="badge badge-generada">PDF generado</span>
+                {% else %}
+                <span class="badge badge-pendiente">Pendiente</span>
+                {% endif %}
             </span>
         </div>
-        {% if ficha.foto_portada_id %}
+        {% if hoja.foto_portada_id %}
         <img class="ficha-resumen-foto"
-             src="{{ url_for('miniatura', foto_id=ficha.foto_portada_id) }}"
-             alt="Fotografía de la ficha {{ ficha.id }}" loading="lazy">
+             src="{{ url_for('miniatura', foto_id=hoja.foto_portada_id) }}"
+             alt="Fotografía de la hoja {{ hoja.id }}" loading="lazy">
         {% else %}
         <span class="ficha-resumen-sin-foto">Sin foto</span>
         {% endif %}
@@ -67,9 +71,9 @@
 {% else %}
 <p class="empty-state">
     {% if busqueda %}
-    No hay fichas que coincidan con la búsqueda.
+    No hay hojas que coincidan con la búsqueda.
     {% else %}
-    Todavía no hay fichas. Pulsa «Nueva ficha» para crear la primera.
+    Todavía no hay hojas. Importa un ZIP de WhatsApp o crea una ficha.
     {% endif %}
 </p>
 {% endif %}

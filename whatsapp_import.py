@@ -7,7 +7,7 @@ import io
 import sqlite3
 import uuid
 import zipfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from typing import BinaryIO
 
@@ -39,6 +39,7 @@ class ResultadoImportacion:
     duplicadas: int = 0
     descartadas: int = 0
     errores: int = 0
+    ids_nuevas: list[int] = field(default_factory=list)
 
 
 def importar_zip_whatsapp(origen: str | Path | BinaryIO) -> ResultadoImportacion:
@@ -128,11 +129,13 @@ def _importar_desde_zip(archivo_zip: zipfile.ZipFile) -> ResultadoImportacion:
 
         if registros:
             with conexion:
-                conexion.executemany(
-                    "INSERT INTO fotos (nombre_archivo, ruta, hash_sha256) "
-                    "VALUES (?, ?, ?)",
-                    registros,
-                )
+                for registro in registros:
+                    cursor = conexion.execute(
+                        "INSERT INTO fotos (nombre_archivo, ruta, hash_sha256) "
+                        "VALUES (?, ?, ?)",
+                        registro,
+                    )
+                    resultado.ids_nuevas.append(cursor.lastrowid)
         return resultado
     except Exception:
         for ruta in archivos_creados:

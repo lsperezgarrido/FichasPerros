@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import socket
 import sys
+import tempfile
 import unittest
 import urllib.request
 from pathlib import Path
@@ -44,6 +45,25 @@ class RutasPersistentesTests(unittest.TestCase):
     def test_rutas_actuales_de_desarrollo(self):
         self.assertEqual(database.DATA_DIR, BASE_DIR / "data")
         self.assertEqual(database.DOCUMENTOS_DIR, BASE_DIR / "documentos")
+
+
+class PerfilEdgeTests(unittest.TestCase):
+    def test_apartar_perfil_conserva_el_anterior(self):
+        with tempfile.TemporaryDirectory() as temporal:
+            perfil = Path(temporal) / "edge-profile"
+            perfil.mkdir()
+            (perfil / "marca.txt").write_text("datos", encoding="utf-8")
+
+            nuevo = desktop._apartar_perfil(perfil)
+
+            self.assertEqual(nuevo, perfil)
+            self.assertTrue(perfil.is_dir())
+            respaldos = list(Path(temporal).glob("edge-profile-bak-*"))
+            self.assertEqual(len(respaldos), 1)
+            self.assertEqual(
+                (respaldos[0] / "marca.txt").read_text(encoding="utf-8"),
+                "datos",
+            )
 
 
 class LanzadorEscritorioTests(unittest.TestCase):

@@ -1,6 +1,7 @@
 """Aplicación Flask local de FichasPerros."""
 
 import io
+import tempfile
 from datetime import datetime
 
 from flask import (
@@ -18,18 +19,24 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 
 import database
 import ficha_service
+import hoja_service
 import pdf_generator
 import whatsapp_import
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = whatsapp_import.MAX_BYTES_ZIP
 database.init_db()
+# Werkzeug usa archivos temporales al recibir el ZIP. En equipos con
+# %TEMP% no escribible se usa la carpeta de datos, que sí lo es.
+tempfile.tempdir = str(database.DATA_DIR)
 
 DATOS_FICHA_VACIOS = {campo: "" for campo in ficha_service.CAMPOS_FICHA}
 MENSAJES_ESTADO = {
     "creada": "Ficha creada correctamente.",
     "actualizada": "Ficha actualizada correctamente.",
     "eliminada": "Ficha eliminada. Sus fotografías siguen en la biblioteca.",
+    "hoja_generada": "PDF de la hoja generado correctamente.",
+    "hoja_eliminada": "Hoja eliminada. Los perros siguen en la biblioteca.",
 }
 
 
@@ -57,12 +64,13 @@ def formatear_fecha_hora(valor):
         return str(valor)
 
 
-def _pagina(resultado=None, error=None, codigo=200):
+def _pagina(resultado=None, error=None, codigo=200, pdf=None):
     return (
         render_template(
             "index.html",
             resultado=resultado,
             error=error,
+            pdf=pdf,
             fotos=database.listar_fotos(),
         ),
         codigo,
@@ -123,12 +131,12 @@ def index():
 
 @app.get("/fichas")
 def lista_fichas():
-    """Lista y busca las fichas existentes."""
+    """Lista y busca las hojas de cuatro fichas existentes."""
     busqueda = request.args.get("q", "").strip()
     mensaje = MENSAJES_ESTADO.get(request.args.get("estado", ""))
     return render_template(
         "fichas_lista.html",
-        fichas=database.listar_fichas(busqueda),
+        hojas=database.listar_hojas(busqueda),
         busqueda=busqueda,
         mensaje=mensaje,
     )
@@ -170,9 +178,61 @@ def crear_ficha():
             "No se pudo guardar la ficha. Inténtalo de nuevo.",
             500,
         )
+    # Toda ficha pertenece a una hoja; si se crea a mano queda como hoja
+    # pendiente de generar su PDF.
+    hoja_service.crear_hoja_para_fichas([ficha_id])
     return redirect(
         url_for("detalle_ficha", ficha_id=ficha_id, estado="creada")
     )
+
+
+@app.get("/fichas/hoja/<int:hoja_id>")
+def detalle_hoja(hoja_id: int):
+    """Muestra una hoja con sus perros y el estado de su PDF."""
+    hoja = database.obtener_hoja(hoja_id)
+    if hoja is None:
+        abort(404)
+    mensaje = MENSAJES_ESTADO.get(request.args.get("estado", ""))
+    return render_template(
+        "hoja_detalle.html",
+        hoja=hoja,
+        perros=database.listar_perros_hoja(hoja_id),
+        mensaje=mensaje,
+    )
+
+
+@app.post("/fichas/hoja/<int:hoja_id>/generar")
+def generar_hoja(hoja_id: int):
+    """Genera el PDF de una hoja pendiente."""
+    if database.obtener_hoja(hoja_id) is None:
+        abort(404)
+    try:
+        hoja_service.generar_pdf_hoja(hoja_id)
+    except Exception:
+        app.logger.exception("Error al generar el PDF de la hoja")
+        return redirect(url_for("detalle_hoja", hoja_id=hoja_id))
+    return redirect(
+        url_for("detalle_hoja", hoja_id=hoja_id, estado="hoja_generada")
+    )
+
+
+@app.get("/fichas/hoja/<int:hoja_id>/eliminar")
+def confirmar_eliminar_hoja(hoja_id: int):
+    hoja = database.obtener_hoja(hoja_id)
+    if hoja is None:
+        abort(404)
+    return render_template(
+        "hoja_eliminar.html",
+        hoja=hoja,
+        num_perros=len(database.listar_perros_hoja(hoja_id)),
+    )
+
+
+@app.post("/fichas/hoja/<int:hoja_id>/eliminar")
+def eliminar_hoja(hoja_id: int):
+    if not hoja_service.eliminar_hoja(hoja_id):
+        abort(404)
+    return redirect(url_for("lista_fichas", estado="hoja_eliminada"))
 
 
 @app.get("/fichas/<int:ficha_id>")
@@ -266,6 +326,7 @@ def eliminar_ficha(ficha_id: int):
     """Elimina una ficha sin tocar fotografías ni PDF históricos."""
     if not ficha_service.eliminar_ficha(ficha_id):
         abort(404)
+    hoja_service.invalidar_pdf_hoja(ficha_id)
     return redirect(url_for("lista_fichas", estado="eliminada"))
 
 
@@ -288,7 +349,42 @@ def importar():
             error="No se pudo completar la importación. Revisa el archivo e inténtalo de nuevo.",
             codigo=500,
         )
-    return _pagina(resultado=resultado)
+
+    pdf = None
+    if resultado.ids_nuevas:
+        try:
+            # Las fotos nuevas se agrupan en hojas de cuatro; cada hoja
+            # genera su propio PDF. Las fotos repetidas no se agrupan otra vez.
+            hojas = hoja_service.registrar_importacion(resultado.ids_nuevas)
+            documentos = []
+            for hoja_id in hojas:
+                nombre = hoja_service.generar_pdf_hoja(hoja_id)
+                if nombre:
+                    documentos.append(
+                        {
+                            "nombre": nombre,
+                            "url": url_for(
+                                "descargar_documento", nombre=nombre
+                            ),
+                        }
+                    )
+            pdf = {
+                "fichas": len(resultado.ids_nuevas),
+                "hojas": len(hojas),
+                "documentos": documentos,
+            }
+        except Exception:
+            app.logger.exception("Error al crear las hojas o el PDF tras importar")
+            return _pagina(
+                resultado=resultado,
+                error=(
+                    "Las fotografías se importaron, pero no se pudieron crear "
+                    "las hojas o el PDF. Puedes hacerlo desde cada hoja."
+                ),
+                codigo=500,
+            )
+
+    return _pagina(resultado=resultado, pdf=pdf)
 
 
 @app.get("/fotos/<int:foto_id>/miniatura")
@@ -375,6 +471,18 @@ def generar_documento_pdf():
             500,
         )
 
+    # Cada foto del documento pasa a tener una ficha editable en la sección
+    # «Fichas». Si ya tenía una ficha asociada, se reutiliza sin duplicarla.
+    try:
+        ficha_service.asegurar_fichas_para_fotos(ids)
+    except Exception:
+        app.logger.exception("Error al registrar las fichas del PDF")
+        resultado.ruta.unlink(missing_ok=True)
+        return (
+            jsonify({"error": "No se pudieron guardar las fichas. Inténtalo de nuevo."}),
+            500,
+        )
+
     return jsonify(
         {
             "nombre": resultado.ruta.name,
@@ -396,7 +504,8 @@ def descargar_documento(nombre: str):
     return send_from_directory(
         database.DOCUMENTOS_DIR,
         nombre,
-        as_attachment=True,
+        as_attachment=False,
+        download_name=nombre,
         max_age=0,
     )
 

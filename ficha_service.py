@@ -81,6 +81,64 @@ def crear_ficha(datos_crudos: dict, archivos) -> int:
         conexion.close()
 
 
+def _mapear_fotos_a_fichas(conexion, foto_ids: list[int]):
+    """Devuelve ``{foto_id: ficha_id}`` y el número de fichas creadas."""
+    mapping: dict[int, int] = {}
+    creadas = 0
+    for foto_id in dict.fromkeys(foto_ids):
+        existe = conexion.execute(
+            "SELECT 1 FROM fotos WHERE id = ?", (foto_id,)
+        ).fetchone()
+        if existe is None:
+            continue
+        vinculada = conexion.execute(
+            "SELECT ficha_id FROM ficha_fotos WHERE foto_id = ? LIMIT 1",
+            (foto_id,),
+        ).fetchone()
+        if vinculada is not None:
+            mapping[foto_id] = vinculada["ficha_id"]
+            continue
+        cursor = conexion.execute(
+            "INSERT INTO fichas "
+            "(lugar_recogida, fecha_recogida, numero_microchip, observaciones) "
+            "VALUES ('', '', '', '')"
+        )
+        conexion.execute(
+            "INSERT INTO ficha_fotos (ficha_id, foto_id, orden) "
+            "VALUES (?, ?, 0)",
+            (cursor.lastrowid, foto_id),
+        )
+        mapping[foto_id] = cursor.lastrowid
+        creadas += 1
+    return mapping, creadas
+
+
+def fichas_para_fotos(foto_ids: list[int]) -> dict[int, int]:
+    """Devuelve la ficha de cada foto, creándola si todavía no existe."""
+    conexion = database.get_connection()
+    try:
+        with conexion:
+            mapping, _ = _mapear_fotos_a_fichas(conexion, foto_ids)
+        return mapping
+    finally:
+        conexion.close()
+
+
+def asegurar_fichas_para_fotos(foto_ids: list[int]) -> int:
+    """Crea una ficha por cada foto que todavía no tenga una.
+
+    Devuelve el número de fichas creadas; las fotos que ya tenían ficha se
+    reutilizan para no duplicar perros.
+    """
+    conexion = database.get_connection()
+    try:
+        with conexion:
+            _, creadas = _mapear_fotos_a_fichas(conexion, foto_ids)
+        return creadas
+    finally:
+        conexion.close()
+
+
 def actualizar_ficha(
     ficha_id: int,
     datos_crudos: dict,

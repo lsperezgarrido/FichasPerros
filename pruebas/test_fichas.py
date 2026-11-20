@@ -64,6 +64,38 @@ class GestionFichasTests(unittest.TestCase):
         finally:
             conexion.close()
 
+    def _insertar_fotos(self, cantidad):
+        conexion = database.get_connection()
+        ids = []
+        try:
+            with conexion:
+                for indice in range(cantidad):
+                    cursor = conexion.execute(
+                        "INSERT INTO fotos (nombre_archivo, ruta, hash_sha256) "
+                        "VALUES (?, ?, ?)",
+                        (
+                            f"foto_{indice}.jpg",
+                            f"fotos/foto_{indice}.jpg",
+                            f"hash-{indice}",
+                        ),
+                    )
+                    ids.append(cursor.lastrowid)
+        finally:
+            conexion.close()
+        return ids
+
+    def test_fichas_del_pdf_no_se_duplican(self):
+        ids = self._insertar_fotos(2)
+
+        self.assertEqual(ficha_service.asegurar_fichas_para_fotos(ids), 2)
+        fichas = database.listar_fichas()
+        self.assertEqual(len(fichas), 2)
+        for ficha in fichas:
+            self.assertEqual(ficha["num_fotos"], 1)
+
+        self.assertEqual(ficha_service.asegurar_fichas_para_fotos(ids), 0)
+        self.assertEqual(len(database.listar_fichas()), 2)
+
     def test_crear_ficha_sin_fotografias(self):
         ficha_id = ficha_service.crear_ficha(
             self._ficha(lugar_recogida="Refugio norte"),

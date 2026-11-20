@@ -25,3 +25,6 @@ dist/
 # Sistema
 Thumbs.db
 desktop.ini
+
+# Capturas de pantalla adjuntas
+Captura de pantalla*.png

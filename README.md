@@ -1,13 +1,56 @@
 # FichasPerros
 
 Aplicación local para Windows destinada a importar fotografías de perros desde
-exportaciones ZIP de WhatsApp y generar fichas imprimibles en PDF.
+exportaciones ZIP de WhatsApp y generar **hojas imprimibles en A4 con cuatro
+fichas por hoja**.
 
-La aplicación permite gestionar fichas de perros, importar fotografías desde
-WhatsApp, evitar duplicados mediante SHA-256, seleccionar imágenes y generar un
-PDF de fichas imprimibles en A4.
+Evita duplicados por SHA-256, lleva el control de qué hojas tienen PDF generado
+y cuáles están pendientes, y funciona sin conexión.
 
-## Requisitos
+## Poner en funcionamiento en un PC nuevo
+
+No hace falta instalar Python ni tener conexión a Internet. Solo se necesita
+Windows 10 u 11 y Microsoft Edge (viene instalado con Windows).
+
+1. Copia `dist\FichasPerros_Windows.zip` al PC nuevo.
+2. Haz clic derecho sobre el ZIP → **Extraer todo**. Se crea una carpeta
+   `FichasPerros` con tres elementos: `FichasPerros.exe`, la carpeta `_internal`
+   y `LEEME.txt`.
+   - Si al extraer aparece una carpeta `FichasPerros` **dentro de otra**, has
+     extraído dentro de una carpeta ya existente. Extrae el ZIP en una carpeta
+     vacía y entra en la `FichasPerros` resultante.
+3. Entra en esa carpeta y haz **doble clic en `FichasPerros.exe`**.
+4. Si Windows muestra la primera vez un aviso de «editor desconocido», pulsa
+   **Más información** → **Ejecutar de todas formas**. El ejecutable no está
+   firmado digitalmente; es habitual.
+5. Si aparece una franja amarilla de Edge sobre `--no-sandbox`, ciérrala con la
+   **X**. Es una advertencia esperada en este equipo; la ventana solo carga
+   contenido local de `127.0.0.1`.
+6. Espera unos segundos: se abre una ventana propia llamada «Fichas de perros»,
+   sin barra de direcciones ni pestañas.
+7. En la pantalla «Inicio», selecciona el ZIP de WhatsApp y pulsa
+   **Importar fotografías**. Las fotos nuevas se agrupan en hojas de cuatro y
+   se genera su PDF automáticamente.
+8. En «Fichas» verás una entrada por hoja con su estado (generada o pendiente).
+   Abre una hoja para editar los datos de cada perro o para ver/generar su PDF.
+9. Para cerrar, cierra la ventana. El servidor local se detiene solo.
+
+**No separes `FichasPerros.exe` de la carpeta `_internal`**: deben viajar
+juntos. Puedes mover o renombrar la carpeta completa sin perder los datos.
+
+### Actualizar sin perder datos
+
+El ZIP contiene **solo el programa, no tus fichas**. En este equipo los datos
+están en `dist\FichasPerros\datos\`, dentro de la carpeta del programa: si
+borras esa carpeta para volver a extraer el ZIP, te llevas por delante las
+fichas, las fotos y los PDF.
+
+Para actualizar sin perder nada: extrae el ZIP nuevo en **otra carpeta**, copia
+la carpeta `datos` de la versión antigua a la nueva y abre el ejecutable nuevo.
+En un PC donde `%LOCALAPPDATA%` sea escribible, copia en su lugar
+`%LOCALAPPDATA%\FichasPerros`.
+
+## Requisitos para ejecutar desde código fuente
 
 - Windows 10 u 11.
 - Para el modo ventana: Microsoft Edge instalado (forma parte de Windows 10/11).
@@ -55,10 +98,10 @@ utilizando `.venv\Scripts\pythonw.exe`.
 
 La ventana no usa Internet y no abre el navegador habitual.
 
-Nota de compatibilidad: en el equipo de pruebas fue necesario que Edge
-arrancase con el sandbox de Chromium desactivado para poder renderizar. La
-ventana solo carga contenido local de `127.0.0.1` y no navega a sitios
-externos.
+Nota de compatibilidad: en este equipo Edge necesita arrancar con el sandbox
+de Chromium desactivado para poder cargar la página local; por eso muestra una
+advertencia. La ventana solo carga contenido de `127.0.0.1` y no navega a
+sitios externos.
 
 ## Distribución Windows
 
@@ -109,24 +152,33 @@ de editor desconocido, hay que permitir su ejecución una vez.
 ### Fichas
 
 1. Abrir «Fichas» en la navegación superior.
-2. Pulsar «Nueva ficha».
-3. Rellenar los campos y seleccionar fotografías si se desean.
-4. Guardar y consultar la ficha desde su pantalla de detalle.
-5. Para modificarla, pulsar «Editar»; para eliminarla, «Eliminar» y confirmar.
+2. Cada entrada es una **hoja A4** con hasta cuatro perros y el estado de su
+   PDF (generado o pendiente).
+3. Abrir una hoja para ver sus perros; desde ahí se puede editar cada uno.
+4. Si la hoja está pendiente, pulsar «Generar PDF de la hoja»; si ya está
+   generada, «Ver PDF de la hoja».
+5. «Eliminar hoja» borra la hoja y su PDF, pero conserva los perros y fotos.
 
-La lista permite buscar por lugar, fecha, microchip, observaciones o número de
-ficha.
+La lista permite buscar por número de hoja, fecha o nombre del PDF.
+
+Las importaciones agrupan las fotos nuevas en hojas de cuatro. La última hoja
+incompleta también se genera, dejando los huecos en blanco.
 
 ### WhatsApp y PDF
 
 1. Seleccionar un ZIP de exportación de WhatsApp.
 2. Pulsar «Importar fotografías».
 3. Consultar el resumen: encontradas, nuevas, duplicadas, descartadas y errores.
-4. En la galería, seleccionar las fotografías que se quieran usar.
-5. Pulsar «Continuar con las seleccionadas» para comprobar el resumen.
-6. Pulsar «Generar PDF» y descargar el documento generado.
+4. Al terminar se crea una ficha por cada foto nueva, se agrupan en **hojas de
+   cuatro perros** y se genera un PDF por hoja. Los enlaces «Ver PDF» abren los
+   documentos en el visor de Edge.
+5. Si se vuelve a importar un ZIP con fotos ya incluidas, no se crean fichas,
+   hojas ni PDF nuevos para esas fotos repetidas.
+6. La galería y su botón «Generar PDF» siguen disponibles para crear otros
+   documentos a partir de una selección manual.
 
-Las imágenes se guardan en `data/fotos` con nombres internos únicos. En SQLite
+Las imágenes se guardan con nombres internos únicos en la carpeta `fotos` de la
+ubicación de datos indicada más abajo (`data/fotos` en desarrollo). En SQLite
 se conserva el nombre original del archivo y la ruta interna. Los archivos
 originales no se modifican y las imágenes repetidas se detectan por hash,
 aunque tengan nombres diferentes.
@@ -140,8 +192,8 @@ nuevas.
 
 Al quitar una fotografía de una ficha, la imagen permanece en la biblioteca
 general. Al eliminar una ficha se eliminan sus vínculos, pero no las
-fotografías ni los PDF ya generados. Esto evita romper otras fichas y conserva
-el historial de documentos.
+fotografías ni los PDF ya generados; su hoja queda marcada como pendiente para
+recordar que hay que regenerarla. Borrar una hoja no borra los perros.
 
 ## Galería y selección
 
@@ -162,9 +214,14 @@ finas para recortar. Cada ficha tiene la fotografía en el tercio izquierdo y
 los campos LUGAR DE RECOGIDA, FECHA DE RECOGIDA, Nº MICROCHIP y OBSERVACIONES
 en el tercio derecho. Las filas que sobran en la última página quedan vacías.
 
-Los documentos se guardan en `documentos/` con un nombre único. Las imágenes
-originales de `data/fotos` no se modifican. El documento generado se descarga
-desde la propia interfaz.
+Cada hoja conserva la relación con sus perros. Si una foto ya tenía ficha, se
+reutiliza en lugar de crear otra. Editar una ficha no modifica los PDF que ya
+se hubieran generado: la hoja queda como está hasta que se regenera.
+
+Los documentos se guardan en la carpeta `documentos` de la ubicación de datos,
+con un nombre único. El documento se abre desde la propia interfaz en el visor
+de Edge, sin diálogo de guardado, y permanece en la carpeta de documentos para
+imprimirlo o copiarlo cuando se quiera.
 
 ## Seguridad de la importación
 
@@ -182,36 +239,62 @@ desde la propia interfaz.
 .\.venv\Scripts\python.exe -m unittest discover -s pruebas -v
 ```
 
-Incluye comprobaciones de importación, duplicados, apertura de las imágenes
-guardadas, conservación de hashes, rechazo de ZIP maliciosos, gestión de fichas
-y ciclo de vida del servidor de escritorio. La generación de PDF se ha validado
-con 1, 3, 4, 5, 6 y 10 fotografías.
+La suite tiene **36 pruebas**. Cubre importación, duplicados por SHA-256,
+apertura de imágenes, conservación de hashes, rechazo de ZIP maliciosos,
+gestión de fichas, agrupación en hojas de cuatro, migración de datos antiguos,
+estados de PDF, borrado de hojas sin perder perros y ciclo de vida del servidor
+de escritorio. La generación de PDF se ha validado con distintos números de
+fotografías, incluida la última hoja incompleta.
 
-Además se probó la distribución onedir generada: arranque sin consola, ventana
-de Edge, navegación, creación de ficha, importación ZIP, PDF, ubicación de
-datos en LocalAppData, cierre sin procesos residuales y reapertura con
-persistencia.
+También se probó la distribución onedir generada: arranque sin consola, ventana
+de Edge, importación con creación automática de hojas y PDF, reimportación sin
+duplicados, apertura y borrado de hojas, y cierre sin procesos residuales.
 
 ## Datos y compatibilidad
 
-La base de datos existente se conserva. Se añadieron las tablas `fichas` y
-`ficha_fotos`; la tabla `fotos` y las fotografías ya importadas no se
-modificaron. No se añadieron dependencias de Python.
+La base de datos existente se conserva y se amplía sin borrar nada. Las tablas
+son `fotos`, `fichas`, `ficha_fotos`, `hojas`, `hoja_fichas` y `metadata`. La
+primera vez que se abre una base antigua se agrupan las fichas existentes en
+hojas de cuatro y se asocian los PDF por antigüedad. No se añadieron
+dependencias de Python.
 
 Durante el desarrollo se mantienen las carpetas actuales del proyecto:
 `data/` y `documentos/`.
 
-Cuando la aplicación esté empaquetada, los datos persistentes se guardarán en:
+Cuando la aplicación está empaquetada, los datos persistentes se guardan en:
 
 ```text
 %LOCALAPPDATA%\FichasPerros\
 ├── fichas.db
 ├── fotos\
-└── documentos\
+├── documentos\
+└── edge-profile\   (perfil interno de la ventana)
 ```
 
 Las rutas se calculan sin depender del directorio de ejecución ni de `_MEIPASS`.
-El empaquetado definitivo con PyInstaller se realizará en una fase posterior.
+Para hacer una copia de seguridad basta con copiar esa carpeta completa.
+
+Si el equipo impide escribir en `%LOCALAPPDATA%` (ocurre en Windows con
+políticas restrictivas como este equipo de pruebas), la aplicación usa `datos\`
+junto al ejecutable con la misma estructura. Se comprueba antes de arrancar;
+cuando `%LOCALAPPDATA%` sí es escribible se usa esa ubicación y no se cambia
+nada de los datos. Para saber dónde se están guardando las fichas, mira si
+existe una carpeta `datos` junto a `FichasPerros.exe`.
+
+## Solución de problemas
+
+- **Windows no deja ejecutar el `.exe`**: pulsa «Más información» →
+  «Ejecutar de todas formas». Es un programa sin firma digital.
+- **Aparece «FichasPerros» con un error al abrir**: comprueba que Microsoft Edge
+  está instalado y que la carpeta `datos` (o `%LOCALAPPDATA%\FichasPerros`) no
+  está en solo lectura. El aviso muestra el motivo concreto.
+- **La franja amarilla de Edge**: es la advertencia por `--no-sandbox`; ciérrala
+  con la X. No impide usar la aplicación.
+- **No se ve el PDF después de importar**: abre «Fichas» y comprueba el estado
+  de la hoja. Si está «Pendiente», entra en ella y pulsa «Generar PDF de la
+  hoja».
+- **Quieres cambiar el equipo**: copia la carpeta del programa y la carpeta de
+  datos; no hace falta exportar desde la aplicación.
 
 ## Estructura
 
@@ -225,6 +308,7 @@ FichasPerros/
 ├── build_windows.ps1      # Genera la distribución Windows
 ├── LEEME_DISTRIBUCION.txt # Instrucciones para el voluntario
 ├── ficha_service.py       # Creación, edición y borrado de fichas
+├── hoja_service.py        # Hojas de 4 perros, PDF y borrado
 ├── whatsapp_import.py     # Importación segura de ZIP
 ├── pdf_generator.py       # Generación de fichas A4 en PDF
 ├── requirements.txt
@@ -232,7 +316,9 @@ FichasPerros/
 ├── templates/
 │   ├── base.html
 │   ├── index.html
-│   ├── fichas_lista.html
+│   ├── fichas_lista.html   # Lista de hojas
+│   ├── hoja_detalle.html
+│   ├── hoja_eliminar.html
 │   ├── ficha_detalle.html
 │   ├── ficha_formulario.html
 │   └── ficha_eliminar.html
@@ -249,6 +335,9 @@ FichasPerros/
     ├── exportacion_whatsapp_02.zip
     ├── test_importacion.py
     ├── test_fichas.py
+    ├── test_hojas.py
+    ├── test_flujo_importacion.py
+    ├── test_documentos.py
     ├── test_desktop.py
     └── CREDITOS.md
 ```

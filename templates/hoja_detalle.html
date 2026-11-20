@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Hoja #{{ hoja.id }} · FichasPerros{% endblock %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <p class="eyebrow">Gestión</p>
+        <h1 class="page-title">Hoja #{{ hoja.id }}</h1>
+        <p class="intro">
+            {{ perros|length }} {% if perros|length == 1 %}perro{% else %}perros{% endif %}
+            · creada el {{ hoja.fecha_creacion|fecha }}
+            {% if hoja.nombre_pdf %}
+            · PDF generado el {{ hoja.fecha_generacion|fecha }}
+            {% endif %}
+        </p>
+    </div>
+    <a class="button-link button-link-secondary"
+       href="{{ url_for('lista_fichas') }}">Volver a fichas</a>
+</div>
+
+{% if mensaje %}
+<div class="alert alert-ok" role="status">{{ mensaje }}</div>
+{% endif %}
+
+<div class="list-summary">
+    {% if hoja.nombre_pdf %}
+    <span class="badge badge-generada">PDF generado</span>
+    <a class="download-link" href="{{ url_for('descargar_documento', nombre=hoja.nombre_pdf) }}"
+       target="_blank" rel="noopener">Ver PDF de la hoja</a>
+    {% else %}
+    <span class="badge badge-pendiente">Pendiente de generar</span>
+    <form method="post" action="{{ url_for('generar_hoja', hoja_id=hoja.id) }}">
+        <button type="submit">Generar PDF de la hoja</button>
+    </form>
+    {% endif %}
+</div>
+
+{% if perros %}
+<div class="fichas-lista">
+    {% for perro in perros %}
+    <article class="ficha-resumen">
+        <div class="ficha-resumen-texto">
+            <span class="ficha-id">Perro {{ loop.index }} de 4</span>
+            <strong class="ficha-titulo">
+                {{ perro.lugar_recogida or 'Sin lugar indicado' }}
+            </strong>
+            <span class="ficha-datos">
+                {% if perro.fecha_recogida %}{{ perro.fecha_recogida|fecha }}{% else %}Sin fecha{% endif %}
+                · {{ perro.numero_microchip or 'Sin microchip' }}
+            </span>
+            <span class="ficha-meta">
+                {{ perro.num_fotos }} {% if perro.num_fotos == 1 %}fotografía{% else %}fotografías{% endif %}
+                · <a href="{{ url_for('editar_ficha', ficha_id=perro.id) }}">Editar datos</a>
+            </span>
+        </div>
+        {% if perro.foto_portada_id %}
+        <img class="ficha-resumen-foto"
+             src="{{ url_for('miniatura', foto_id=perro.foto_portada_id) }}"
+             alt="Fotografía del perro {{ loop.index }}" loading="lazy">
+        {% else %}
+        <span class="ficha-resumen-sin-foto">Sin foto</span>
+        {% endif %}
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<p class="empty-state">Esta hoja no tiene perros asociados.</p>
+{% endif %}
+
+<p class="note">
+    <a href="{{ url_for('confirmar_eliminar_hoja', hoja_id=hoja.id) }}">Eliminar hoja</a>
+    · los perros y sus fotos se conservan en la biblioteca.
+</p>
+{% endblock %}

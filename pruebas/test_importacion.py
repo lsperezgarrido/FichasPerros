@@ -87,6 +87,15 @@ class ImportacionWhatsAppTests(unittest.TestCase):
         with archivo.open("rb") as manejador:
             return whatsapp_import.importar_zip_whatsapp(manejador)
 
+    def test_ids_nuevas_solo_incluye_fotos_recien_importadas(self):
+        primera = self._importar(ZIP1)
+        self.assertEqual(len(primera.ids_nuevas), 7)
+        self.assertEqual(len(set(primera.ids_nuevas)), 7)
+
+        segunda = self._importar(ZIP1)
+        self.assertEqual(segunda.nuevas, 0)
+        self.assertEqual(segunda.ids_nuevas, [])
+
     def test_importar_zip1(self):
         resultado = self._importar(ZIP1)
         self.assertEqual(resultado.encontradas, 7)

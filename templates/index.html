@@ -60,6 +60,16 @@
             <dd>{{ resultado.errores }}</dd>
         </div>
     </dl>
+    {% if pdf %}
+    <p>
+        PDF generado con {{ pdf.fichas }}
+        {{ 'perro nuevo' if pdf.fichas == 1 else 'perros nuevos' }} en
+        {{ pdf.hojas }} {% if pdf.hojas == 1 %}hoja{% else %}hojas{% endif %}:
+        {% for documento in pdf.documentos %}
+        <a class="download-link" href="{{ documento.url }}" target="_blank" rel="noopener">Ver PDF {{ loop.index }}</a>
+        {% endfor %}
+    </p>
+    {% endif %}
 </section>
 {% endif %}
 

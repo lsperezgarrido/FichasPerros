@@ -26,6 +26,21 @@ Si Windows muestra una advertencia de seguridad porque el ejecutable no tiene
 firma digital, pulsar "Más información" y después "Ejecutar de todas formas".
 Es habitual en programas pequeños distribuidos sin certificado de firma.
 
+AL IMPORTAR UN ZIP
+------------------
+
+Al importar un ZIP se crea automáticamente una ficha por cada foto nueva. Las
+fotos se agrupan en hojas de cuatro perros y se genera un PDF por hoja; los
+enlaces "Ver PDF" abren los documentos en la ventana.
+
+Si el ZIP contiene fotos que ya se importaron antes, no se crean fichas, hojas
+ni PDF nuevos para ellas: las imágenes repetidas se reconocen por su contenido.
+
+En "Fichas" verás una entrada por hoja, con su estado: "PDF generado" o
+"Pendiente". Al abrir una hoja puedes editar los datos de cada perro, ver o
+generar su PDF y eliminar la hoja. Borrar una hoja no borra los perros ni sus
+fotos.
+
 DÓNDE SE GUARDAN LOS DATOS
 --------------------------
 
@@ -43,5 +58,13 @@ Contiene:
 No borrar esa carpeta si se quieren conservar las fichas. Hacer una copia de
 esa carpeta es suficiente para respaldar los datos.
 
-La carpeta del programa y %LOCALAPPDATA% son independientes: se puede mover o
-actualizar la aplicación sin perder los datos.
+En algunos equipos Windows impide que los programas sin firma escriban en
+%LOCALAPPDATA%. En ese caso la aplicación guarda los datos en una carpeta
+"datos" dentro de la carpeta del programa, con la misma estructura. Para
+saber dónde se están guardando, mira si existe "datos" junto a FichasPerros.exe.
+
+Para actualizar o volver a descomprimir el ZIP sin perder nada: extrae la
+versión nueva en OTRA carpeta y copia ahí la carpeta de datos desde la anterior
+("datos" junto al ejecutable, o %LOCALAPPDATA%\FichasPerros en un PC normal).
+No borres la carpeta del programa sin copiar antes esa carpeta de datos: las
+fichas, las fotos y los PDF están ahí, no dentro del ZIP.

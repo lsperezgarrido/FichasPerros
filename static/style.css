@@ -675,6 +675,18 @@ button:focus-visible,
     white-space: nowrap;
 }
 
+.badge-generada {
+    background: #e7f3e8;
+    border-color: #b9d8be;
+    color: #2f6b3a;
+}
+
+.badge-pendiente {
+    background: #fdf1dc;
+    border-color: #e6cfa3;
+    color: #8a621a;
+}
+
 .selection-toolbar {
     display: flex;
     flex-wrap: wrap;

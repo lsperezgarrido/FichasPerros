@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Eliminar hoja · FichasPerros{% endblock %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <p class="eyebrow">Gestión</p>
+        <h1 class="page-title">Eliminar hoja #{{ hoja.id }}</h1>
+    </div>
+    <a class="button-link button-link-secondary"
+       href="{{ url_for('detalle_hoja', hoja_id=hoja.id) }}">Cancelar</a>
+</div>
+
+<p class="intro">
+    Se eliminará la hoja y su archivo PDF. Los {{ num_perros }}
+    {% if num_perros == 1 %}perro{% else %}perros{% endif %} y sus fotografías
+    seguirán disponibles en la biblioteca.
+</p>
+
+<form class="form-actions" method="post"
+      action="{{ url_for('eliminar_hoja', hoja_id=hoja.id) }}">
+    <button type="submit">Eliminar hoja</button>
+    <a class="button-link button-link-secondary"
+       href="{{ url_for('detalle_hoja', hoja_id=hoja.id) }}">Volver</a>
+</form>
+{% endblock %}
