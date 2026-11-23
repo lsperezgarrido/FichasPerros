@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
+from PIL import Image
+
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib.utils import ImageReader
@@ -144,17 +146,34 @@ def _dibujar_ficha(documento: canvas.Canvas, ruta_foto: Path, y_inferior: float)
     ancho_foto = ANCHO_FOTO - 2 * PADDING
     alto_foto = ALTO_FICHA - 2 * PADDING
     try:
-        imagen = ImageReader(str(ruta_foto))
-        documento.drawImage(
-            imagen,
-            x_foto,
-            y_foto,
-            width=ancho_foto,
-            height=alto_foto,
-            preserveAspectRatio=True,
-            anchor="c",
-            mask="auto",
-        )
+        with Image.open(ruta_foto) as imagen:
+            # Recortar el centro a la misma proporción que el marco para que la
+            # foto lo cubra por completo, sin bandas blancas ni deformación.
+            relacion_marco = ancho_foto / alto_foto
+            relacion_imagen = imagen.width / imagen.height
+            if relacion_imagen > relacion_marco:
+                nuevo_ancho = round(imagen.height * relacion_marco)
+                izquierda = (imagen.width - nuevo_ancho) // 2
+                recortada = imagen.crop(
+                    (izquierda, 0, izquierda + nuevo_ancho, imagen.height)
+                )
+            elif relacion_imagen < relacion_marco:
+                nuevo_alto = round(imagen.width / relacion_marco)
+                arriba = (imagen.height - nuevo_alto) // 2
+                recortada = imagen.crop(
+                    (0, arriba, imagen.width, arriba + nuevo_alto)
+                )
+            else:
+                recortada = imagen
+            documento.drawImage(
+                ImageReader(recortada),
+                x_foto,
+                y_foto,
+                width=ancho_foto,
+                height=alto_foto,
+                preserveAspectRatio=False,
+                mask="auto",
+            )
     except Exception as exc:
         raise ValueError(
             f"No se pudo incluir la fotografía {ruta_foto.name} en el PDF."
