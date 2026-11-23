@@ -7,12 +7,38 @@ fichas por hoja**.
 Evita duplicados por SHA-256, lleva el control de qué hojas tienen PDF generado
 y cuáles están pendientes, y funciona sin conexión.
 
-## Poner en funcionamiento en un PC nuevo
+## Uso rápido: clonar y ejecutar
+
+El repositorio incluye la aplicación de Windows **ya compilada** en `app\`.
+**No hace falta instalar Python ni descargar nada más.**
+
+```powershell
+git clone https://github.com/lsperezgarrido/FichasPerros
+cd FichasPerros
+.\app\FichasPerros.exe
+```
+
+Sin terminal: entra en la carpeta clonada y haz doble clic en
+`app\FichasPerros.exe`.
+
+Si Windows muestra un aviso de editor desconocido, pulsa **Más información** →
+**Ejecutar de todas formas**. Si Edge muestra una franja amarilla por
+`--no-sandbox`, ciérrala con la X. En unos segundos debe abrirse una ventana
+titulada **«Fichas de perros»**.
+
+El repositorio **no contiene datos**: la aplicación arranca vacía y crea su
+carpeta de datos automáticamente. Guía paso a paso para alguien sin experiencia:
+[INICIO_RAPIDO.md](INICIO_RAPIDO.md).
+
+## Instalar desde el ZIP en un PC nuevo (sin clonar)
+
+Esta ruta es para quien recibe el archivo ZIP directamente. Si vas a clonar el
+repositorio, usa el apartado «Uso rápido» de arriba: el `app\` ya está listo.
 
 No hace falta instalar Python ni tener conexión a Internet. Solo se necesita
 Windows 10 u 11 y Microsoft Edge (viene instalado con Windows).
 
-1. Copia `dist\FichasPerros_Windows.zip` al PC nuevo.
+1. Copia `FichasPerros_Windows.zip` al PC nuevo (se genera en `dist\`).
 2. Haz clic derecho sobre el ZIP → **Extraer todo**. Se crea una carpeta
    `FichasPerros` con tres elementos: `FichasPerros.exe`, la carpeta `_internal`
    y `LEEME.txt`.
@@ -45,9 +71,12 @@ están en `dist\FichasPerros\datos\`, dentro de la carpeta del programa: si
 borras esa carpeta para volver a extraer el ZIP, te llevas por delante las
 fichas, las fotos y los PDF.
 
-Para actualizar sin perder nada: extrae el ZIP nuevo en **otra carpeta**, copia
-la carpeta `datos` de la versión antigua a la nueva y abre el ejecutable nuevo.
-En un PC donde `%LOCALAPPDATA%` sea escribible, copia en su lugar
+Si clonaste el repositorio, basta con `git pull`: los datos no están en Git,
+así que no se tocan. Solo acuérdate de no borrar la carpeta de datos.
+
+Si actualizas desde el ZIP: extrae el ZIP nuevo en **otra carpeta**, copia la
+carpeta `datos` de la versión antigua a la nueva y abre el ejecutable nuevo. En
+un PC donde `%LOCALAPPDATA%` sea escribible, copia en su lugar
 `%LOCALAPPDATA%\FichasPerros`.
 
 ## Requisitos para ejecutar desde código fuente
@@ -313,6 +342,11 @@ FichasPerros/
 ├── pdf_generator.py       # Generación de fichas A4 en PDF
 ├── requirements.txt
 ├── README.md
+├── INICIO_RAPIDO.md       # Guía para clonar y ejecutar sin experiencia
+├── app/                   # Aplicación compilada incluida en el repo (sin datos)
+│   ├── FichasPerros.exe
+│   ├── LEEME.txt
+│   └── _internal/
 ├── templates/
 │   ├── base.html
 │   ├── index.html

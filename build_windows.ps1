@@ -21,6 +21,18 @@ if ($LASTEXITCODE -ne 0) {
 
 Copy-Item "LEEME_DISTRIBUCION.txt" "dist\FichasPerros\LEEME.txt" -Force
 
+# Mantener actualizada la copia que viaja en el repositorio. Así, clonar el
+# repo es suficiente para ejecutar el programa sin Python. Nunca se copia la
+# carpeta "datos": los datos del usuario no se incluyen en el repositorio.
+$app = Join-Path $PSScriptRoot "app"
+if (Test-Path $app) {
+    Remove-Item $app -Recurse -Force
+}
+New-Item -ItemType Directory -Path $app -Force | Out-Null
+Copy-Item "dist\FichasPerros\FichasPerros.exe" -Destination $app -Force
+Copy-Item "dist\FichasPerros\LEEME.txt" -Destination $app -Force
+Copy-Item "dist\FichasPerros\_internal" -Destination $app -Recurse -Force
+
 $zip = "dist\FichasPerros_Windows.zip"
 if (Test-Path $zip) {
     Remove-Item $zip -Force
@@ -32,3 +44,4 @@ Write-Host "Distribución creada:"
 Write-Host "  dist\FichasPerros\FichasPerros.exe"
 Write-Host "  dist\FichasPerros\LEEME.txt"
 Write-Host "  $zip"
+Write-Host "  app\FichasPerros.exe  (copia incluida en el repositorio)"

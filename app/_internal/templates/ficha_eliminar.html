@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Eliminar ficha #{{ ficha.id }} · FichasPerros{% endblock %}
+
+{% block content %}
+<p class="eyebrow">Confirmación</p>
+<h1 class="page-title">Eliminar ficha #{{ ficha.id }}</h1>
+
+<div class="alert alert-error" role="alert">
+    Esta acción eliminará la ficha y sus vínculos con las fotografías.
+    No se puede deshacer.
+</div>
+
+<dl class="ficha-datos">
+    <div>
+        <dt>Lugar de recogida</dt>
+        <dd>{{ ficha.lugar_recogida or "—" }}</dd>
+    </div>
+    <div>
+        <dt>Fecha de recogida</dt>
+        <dd>{% if ficha.fecha_recogida %}{{ ficha.fecha_recogida|fecha }}{% else %}—{% endif %}</dd>
+    </div>
+    <div>
+        <dt>Nº microchip</dt>
+        <dd>{{ ficha.numero_microchip or "—" }}</dd>
+    </div>
+    <div>
+        <dt>Fotografías asociadas</dt>
+        <dd>{{ num_fotos }}</dd>
+    </div>
+</dl>
+
+<p class="delete-note">
+    Las fotografías no se borrarán: seguirán disponibles en la biblioteca
+    general y en otras fichas. Los documentos PDF ya generados tampoco se
+    modificarán.
+</p>
+
+<form class="form-actions" method="post" action="{{ url_for('eliminar_ficha', ficha_id=ficha.id) }}">
+    <button type="submit" class="button-danger">Sí, eliminar ficha #{{ ficha.id }}</button>
+    <a class="button-link button-link-secondary" href="{{ url_for('detalle_ficha', ficha_id=ficha.id) }}">Cancelar</a>
+</form>
+{% endblock %}

@@ -12,8 +12,11 @@ usa la distribución generada.
 - Configuración: [FichasPerros.spec](FichasPerros.spec)
 - Generación: [build_windows.ps1](build_windows.ps1)
 - Distribución: `dist/FichasPerros_Windows.zip`
-- Guía de instalación para un PC nuevo: sección «Poner en funcionamiento en un
-  PC nuevo» de [README.md](README.md).
+- El repositorio incluye `app\` con la aplicación compilada (exe + `_internal` +
+  LEEME, **sin datos**) para que clonar sea suficiente para ejecutarla.
+  `build_windows.ps1` actualiza esa carpeta automáticamente en cada build.
+- Guía paso a paso para alguien sin experiencia: [INICIO_RAPIDO.md](INICIO_RAPIDO.md).
+  Está enlazada desde el primer apartado de [README.md](README.md).
 - Suite de pruebas: 36 pruebas, todas pasan.
 
 ## Requisitos para ejecutar desde código fuente

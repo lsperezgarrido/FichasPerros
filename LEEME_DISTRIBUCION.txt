@@ -3,6 +3,9 @@
 
 Aplicación local para gestionar fichas de perros e imprimirlas en PDF.
 
+Si has clonado el repositorio, no hace falta descomprimir nada: entra en la
+carpeta clonada y ejecuta app\FichasPerros.exe con doble clic.
+
 REQUISITOS
 ----------
 

@@ -5,6 +5,8 @@
 # Python
 __pycache__/
 *.py[cod]
+# Los .pyd de app\ son módulos binarios necesarios, no archivos .pyc
+!app/**/*.pyd
 
 # Datos locales
 data/*.db
