@@ -74,6 +74,10 @@ fichas, las fotos y los PDF.
 Si clonaste el repositorio, basta con `git pull`: los datos no están en Git,
 así que no se tocan. Solo acuérdate de no borrar la carpeta de datos.
 
+Si la carpeta `app\` se copió a mano, en
+[INICIO_RAPIDO.md](INICIO_RAPIDO.md) está el apartado «Actualizar una
+instalación existente» con los dos archivos concretos que hay que sustituir.
+
 Si actualizas desde el ZIP: extrae el ZIP nuevo en **otra carpeta**, copia la
 carpeta `datos` de la versión antigua a la nueva y abre el ejecutable nuevo. En
 un PC donde `%LOCALAPPDATA%` sea escribible, copia en su lugar

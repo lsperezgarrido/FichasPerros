@@ -53,6 +53,41 @@ Según el equipo, los datos se guardan en:
 
 Para conservar o trasladar las fichas, copia esa carpeta de datos completa.
 
+## Actualizar una instalación existente
+
+Para pasar a una versión nueva sin perder fotos, fichas ni PDF, no hace falta
+reinstalar nada ni borrar carpetas.
+
+**Si el PC clonó el repositorio:**
+
+1. Cierra la aplicación.
+2. En la carpeta clonada ejecuta `git pull`.
+3. Vuelve a abrir `app\FichasPerros.exe`.
+
+**Si la carpeta `app\` se copió a mano (sin Git):**
+
+1. Cierra la aplicación en ese PC.
+2. Sustituye estos dos archivos por los de la versión nueva:
+
+   ```text
+   app\FichasPerros.exe
+   app\_internal\base_library.zip
+   ```
+
+   El segundo contiene el código de la aplicación: si no se cambia, el
+   ejecutable sigue usando la versión anterior.
+
+3. Vuelve a abrir `FichasPerros.exe`.
+
+**No sustituyas nunca** `fichas.db` ni las carpetas `fotos\`, `documentos\` ni
+`edge-profile\`. Están en `%LOCALAPPDATA%\FichasPerros\` o en `app\datos\`,
+según el equipo; en ninguno de los dos casos hay que tocarlos.
+
+Los PDF ya generados no cambian retroactivamente. Si una actualización cambia
+la presentación de las fichas y quieres aplicarla a un PDF antiguo, abre su
+hoja y pulsa **«Generar PDF de la hoja»**: se crea un documento nuevo y el
+anterior permanece en `documentos\`.
+
 ## Uso mínimo
 
 1. En la pantalla **Inicio**, selecciona un ZIP de exportación de WhatsApp y
